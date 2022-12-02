@@ -18,27 +18,18 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3.2.0
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v2.5.2
+        uses: golangci/golangci-lint-action@v3.3.1
         with:
           version: latest
-
-  goimports:
-    name: Perform goimports
-    runs-on: 'ubuntu-latest'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3.0.2
-      - name: Run goimports
-        uses: Jerome1337/goimports-action@v1.0.3
-
   test:
     name: Run tests
     runs-on: 'ubuntu-latest'
-    needs: [lint, goimports]
     steps:
       - name: Checkout
         uses: actions/checkout@v3.0.2
+      - name: Use Docker in rootless mode.
+        uses: ScribeMD/rootless-docker@0.2.2
       - name: Setup go
         uses: actions/setup-go@v3.2.0
       - name: Run tests
-        run: go test -v -cover -v ./...
+        run: go test -v -cover ./...
