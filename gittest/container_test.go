@@ -2,7 +2,6 @@ package gittest_test
 
 import (
 	"context"
-
 	"testing"
 	"time"
 
@@ -10,9 +9,24 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCreateEmptyRepo(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should return empty repository", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		repo, err := gittest.CreateEmptyRepo(ctx, t)
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, transport.ErrEmptyRemoteRepository.Error())
+		assert.NotNil(t, repo)
+	})
+}
 
 func TestCreateBasicRepo(t *testing.T) {
 	t.Parallel()
