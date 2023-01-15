@@ -3,7 +3,6 @@ package gittest
 import (
 	"context"
 	"fmt"
-	"io"
 	"testing"
 
 	"github.com/go-git/go-git/v5"
@@ -20,14 +19,6 @@ func CreateBasicRepo(ctx context.Context, t *testing.T) (*git.Repository, error)
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err)
 	require.NoError(t, pool.Client.Ping())
-
-	buildOpts := docker.BuildImageOptions{
-		Name:         "gitcha/basic_repo_single_author",
-		Dockerfile:   "basic_repo_single_author.Dockerfile",
-		OutputStream: io.Discard,
-		ContextDir:   "testdata/image",
-	}
-	require.NoError(t, pool.Client.BuildImage(buildOpts))
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository:   "gitcha/basic_repo_single_author",
@@ -63,14 +54,6 @@ func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (*git.Reposit
 	pool, err := dockertest.NewPool("")
 	require.NoError(t, err)
 	require.NoError(t, pool.Client.Ping())
-
-	buildOpts := docker.BuildImageOptions{
-		Name:         "gitcha/basic_repo_multiple_authors",
-		Dockerfile:   "basic_repo_multiple_authors.Dockerfile",
-		OutputStream: io.Discard,
-		ContextDir:   "testdata/image",
-	}
-	require.NoError(t, pool.Client.BuildImage(buildOpts))
 
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository:   "gitcha/basic_repo_multiple_authors",
