@@ -27,9 +27,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.0.2
-      - name: Use Docker in rootless mode.
-        uses: ScribeMD/rootless-docker@0.2.2
       - name: Setup go
         uses: actions/setup-go@v3.2.0
+      - name: Run script file
+        run: |
+          chmod +x ./setup/setup.sh
+          ./setup/setup.sh
+        shell: bash
       - name: Run tests
         run: go test -v -cover ./...
