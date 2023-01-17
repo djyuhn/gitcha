@@ -34,3 +34,41 @@ func GetCreatedDate(repo *git.Repository) (time.Time, error) {
 
 	return commits[len(commits)-1].Author.When, nil
 }
+
+type Author struct {
+	Name  string
+	Email string
+}
+
+// GetAuthorsByCommits returns the contributors and their commits they made.
+func GetAuthorsByCommits(repo *git.Repository) (map[Author][]object.Commit, error) {
+	if repo == nil {
+		return nil, fmt.Errorf("GetAuthorsByCommits: received a nil repository")
+	}
+	if repo.Storer == nil {
+		return nil, fmt.Errorf("GetAuthorsByCommits: invalid repository - Storer is nil")
+	}
+
+	head, err := repo.Head()
+	if err != nil {
+		return nil, fmt.Errorf("GetAuthorsByCommits: received a repository without a head: %w", err)
+	}
+	if head == nil {
+		return nil, fmt.Errorf("GetAuthorsByCommits: received a repository without a head")
+	}
+
+	contributorCommits := make(map[Author][]object.Commit)
+
+	cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+	_ = cIter.ForEach(func(c *object.Commit) error {
+		contributor := Author{
+			Name:  c.Author.Name,
+			Email: c.Author.Email,
+		}
+
+		contributorCommits[contributor] = append(contributorCommits[contributor], *c)
+		return nil
+	})
+
+	return contributorCommits, nil
+}
