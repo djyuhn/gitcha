@@ -41,36 +41,13 @@ func TestGetCreatedDate(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("given nil repository should return default time and error", func(t *testing.T) {
+	t.Run("given invalid repository should return default time and error", func(t *testing.T) {
 		t.Parallel()
+
 		expectedTime := time.Time{}
-		expectedErr := fmt.Errorf("GetCreatedDate: received a nil repository")
+		expectedErr := fmt.Errorf("GetCreatedDate: received an invalid repository")
 
 		actualTime, err := reporeader.GetCreatedDate(nil)
-
-		assert.Equal(t, expectedTime, actualTime)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given repository with nil Storer should return default time and error", func(t *testing.T) {
-		t.Parallel()
-		expectedErr := fmt.Errorf("GetCreatedDate: invalid repository - Storer is nil")
-		expectedTime := time.Time{}
-		actualTime, err := reporeader.GetCreatedDate(&git.Repository{Storer: nil})
-
-		assert.Equal(t, expectedTime, actualTime)
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given empty repository should return default time and error", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-		repo, _ := gittest.CreateEmptyRepo(ctx, t)
-
-		expectedErr := fmt.Errorf("GetCreatedDate: received a repository without a head")
-		expectedTime := time.Time{}
-		actualTime, err := reporeader.GetCreatedDate(repo)
 
 		assert.Equal(t, expectedTime, actualTime)
 		assert.ErrorContains(t, err, expectedErr.Error())
@@ -80,33 +57,11 @@ func TestGetCreatedDate(t *testing.T) {
 func TestGetContributorsByCommits(t *testing.T) {
 	t.Parallel()
 
-	t.Run("given nil repository should return empty map and error", func(t *testing.T) {
+	t.Run("given an invalid repository should return empty map and error", func(t *testing.T) {
 		t.Parallel()
-		expectedErr := fmt.Errorf("GetAuthorsByCommits: received a nil repository")
 
+		expectedErr := fmt.Errorf("GetAuthorsByCommits: received an invalid repository")
 		actual, err := reporeader.GetAuthorsByCommits(nil)
-
-		assert.Nil(t, actual)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given repository with nil Storer should empty map and error", func(t *testing.T) {
-		t.Parallel()
-		expectedErr := fmt.Errorf("GetAuthorsByCommits: invalid repository - Storer is nil")
-		actual, err := reporeader.GetAuthorsByCommits(&git.Repository{Storer: nil})
-
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given empty repository should return empty map and error", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-		repo, _ := gittest.CreateEmptyRepo(ctx, t)
-
-		expectedErr := fmt.Errorf("GetAuthorsByCommits: received a repository without a head")
-		actual, err := reporeader.GetAuthorsByCommits(repo)
 
 		assert.Nil(t, actual)
 		assert.ErrorContains(t, err, expectedErr.Error())
