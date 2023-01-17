@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
@@ -71,4 +72,25 @@ func GetAuthorsByCommits(repo *git.Repository) (map[Author][]object.Commit, erro
 	})
 
 	return contributorCommits, nil
+}
+
+// ValidateRepository validates the given repository and returns the head of the repository if valid and a nil error.
+// If the repository is invalid a nil head reference and a non-nil error are returned.
+func ValidateRepository(repo *git.Repository) (*plumbing.Reference, error) {
+	if repo == nil {
+		return nil, fmt.Errorf("ValidateRepository: received a nil repository")
+	}
+	if repo.Storer == nil {
+		return nil, fmt.Errorf("ValidateRepository: invalid repository - Storer is nil")
+	}
+
+	head, err := repo.Head()
+	if err != nil {
+		return nil, fmt.Errorf("ValidateRepository: received a repository without a head: %w", err)
+	}
+	if head == nil {
+		return nil, fmt.Errorf("ValidateRepository: received a repository without a head")
+	}
+
+	return head, nil
 }

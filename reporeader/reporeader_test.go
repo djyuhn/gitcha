@@ -172,3 +172,55 @@ func TestGetContributorsByCommits(t *testing.T) {
 		assert.Contains(t, actual, expectedAuthor4)
 	})
 }
+
+func TestValidateRepository(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given a nil repository should nil head reference and error", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := fmt.Errorf("ValidateRepository: received a nil repository")
+		head, err := reporeader.ValidateRepository(nil)
+
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.Nil(t, head)
+	})
+
+	t.Run("given repository with nil Storer should return error", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := fmt.Errorf("ValidateRepository: invalid repository - Storer is nil")
+		head, err := reporeader.ValidateRepository(&git.Repository{Storer: nil})
+
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.Nil(t, head)
+	})
+
+	t.Run("given empty repository should return error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateEmptyRepo(ctx, t)
+		require.Error(t, err)
+
+		expectedErr := fmt.Errorf("ValidateRepository: received a repository without a head")
+		head, err := reporeader.ValidateRepository(repo)
+
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.Nil(t, head)
+	})
+
+	t.Run("given valid repository should return head reference and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		expected, err := repo.Head()
+		require.NoError(t, err)
+
+		head, err := reporeader.ValidateRepository(repo)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, head)
+	})
+}
