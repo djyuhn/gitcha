@@ -16,7 +16,10 @@ import (
 )
 
 func TestGetCreatedDate(t *testing.T) {
+	t.Parallel()
+
 	t.Run("given repository with commits should return time of oldest commit", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
@@ -39,6 +42,7 @@ func TestGetCreatedDate(t *testing.T) {
 	})
 
 	t.Run("given nil repository should return default time and error", func(t *testing.T) {
+		t.Parallel()
 		expectedTime := time.Time{}
 		expectedErr := fmt.Errorf("GetCreatedDate: received a nil repository")
 
@@ -49,6 +53,7 @@ func TestGetCreatedDate(t *testing.T) {
 	})
 
 	t.Run("given repository with nil Storer should return default time and error", func(t *testing.T) {
+		t.Parallel()
 		expectedErr := fmt.Errorf("GetCreatedDate: invalid repository - Storer is nil")
 		expectedTime := time.Time{}
 		actualTime, err := reporeader.GetCreatedDate(&git.Repository{Storer: nil})
@@ -59,6 +64,7 @@ func TestGetCreatedDate(t *testing.T) {
 	})
 
 	t.Run("given empty repository should return default time and error", func(t *testing.T) {
+		t.Parallel()
 		ctx := context.Background()
 		repo, _ := gittest.CreateEmptyRepo(ctx, t)
 

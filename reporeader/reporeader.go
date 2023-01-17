@@ -25,8 +25,8 @@ func GetCreatedDate(repo *git.Repository) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("GetCreatedDate: received a repository without a head")
 	}
 
-	cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
 	commits := make([]*object.Commit, 0)
+	cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
 	_ = cIter.ForEach(func(c *object.Commit) error {
 		commits = append(commits, c)
 		return nil
