@@ -11,19 +11,9 @@ import (
 
 // GetCreatedDate returns the time that the repository was first created.
 func GetCreatedDate(repo *git.Repository) (time.Time, error) {
-	if repo == nil {
-		return time.Time{}, fmt.Errorf("GetCreatedDate: received a nil repository")
-	}
-	if repo.Storer == nil {
-		return time.Time{}, fmt.Errorf("GetCreatedDate: invalid repository - Storer is nil")
-	}
-
-	head, err := repo.Head()
-	if err != nil {
-		return time.Time{}, fmt.Errorf("GetCreatedDate: received a repository without a head: %w", err)
-	}
-	if head == nil {
-		return time.Time{}, fmt.Errorf("GetCreatedDate: received a repository without a head")
+	head, err := ValidateRepository(repo)
+	if err != nil || head == nil {
+		return time.Time{}, fmt.Errorf("GetCreatedDate: received an invalid repository: %w", err)
 	}
 
 	commits := make([]*object.Commit, 0)
@@ -43,19 +33,9 @@ type Author struct {
 
 // GetAuthorsByCommits returns the contributors and their commits they made.
 func GetAuthorsByCommits(repo *git.Repository) (map[Author][]object.Commit, error) {
-	if repo == nil {
-		return nil, fmt.Errorf("GetAuthorsByCommits: received a nil repository")
-	}
-	if repo.Storer == nil {
-		return nil, fmt.Errorf("GetAuthorsByCommits: invalid repository - Storer is nil")
-	}
-
-	head, err := repo.Head()
-	if err != nil {
-		return nil, fmt.Errorf("GetAuthorsByCommits: received a repository without a head: %w", err)
-	}
-	if head == nil {
-		return nil, fmt.Errorf("GetAuthorsByCommits: received a repository without a head")
+	head, err := ValidateRepository(repo)
+	if err != nil || head == nil {
+		return nil, fmt.Errorf("GetAuthorsByCommits: received an invalid repository: %w", err)
 	}
 
 	contributorCommits := make(map[Author][]object.Commit)
