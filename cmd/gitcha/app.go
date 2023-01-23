@@ -3,7 +3,7 @@ package gitcha
 import (
 	"fmt"
 
-	"gitcha/tui"
+	"github.com/djyuhn/gitcha/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

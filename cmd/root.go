@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 
-	"gitcha/cmd/gitcha"
-	"gitcha/tui"
+	"github.com/djyuhn/gitcha/cmd/gitcha"
+	"github.com/djyuhn/gitcha/tui"
 
 	"github.com/spf13/cobra"
 )

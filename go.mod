@@ -1,4 +1,4 @@
-module gitcha
+module github.com/djyuhn/gitcha
 
 go 1.19
 

@@ -3,7 +3,7 @@ package cmd_test
 import (
 	"testing"
 
-	"gitcha/cmd"
+	"github.com/djyuhn/gitcha/cmd"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"

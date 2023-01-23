@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"gitcha/gittest"
-	"gitcha/reporeader"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/reporeader"
 )
 
 func TestGetLicense(t *testing.T) {
