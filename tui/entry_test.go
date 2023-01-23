@@ -3,7 +3,7 @@ package tui_test
 import (
 	"testing"
 
-	"gitcha/tui"
+	"github.com/djyuhn/gitcha/tui"
 
 	"github.com/stretchr/testify/assert"
 )

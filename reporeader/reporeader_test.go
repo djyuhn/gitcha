@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gitcha/gittest"
-	"gitcha/reporeader"
+	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/reporeader"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"gitcha/cmd/gitcha"
-	"gitcha/tui"
+	"github.com/djyuhn/gitcha/cmd/gitcha"
+	"github.com/djyuhn/gitcha/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
