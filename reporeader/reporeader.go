@@ -155,43 +155,57 @@ func (r *RepoReader) getLicenseFromRoot(fs billy.Filesystem) (string, error) {
 }
 
 // GetCreatedDate returns the time that the repository was first created.
-func GetCreatedDate(repo *git.Repository) (time.Time, error) {
-	head, err := ValidateRepository(repo)
-	if err != nil || head == nil {
-		return time.Time{}, fmt.Errorf("GetCreatedDate: received an invalid repository: %w", err)
+func (r *RepoReader) GetCreatedDate() (time.Time, error) {
+	head, err := r.repository.Head()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("GetCreatedDate: unable to get the repository head: %w", err)
 	}
 
 	commits := make([]*object.Commit, 0)
-	cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+	cIter, _ := r.repository.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
 	_ = cIter.ForEach(func(c *object.Commit) error {
 		commits = append(commits, c)
 		return nil
 	})
 
-	return commits[len(commits)-1].Author.When, nil
+	return r.getCreatedDate(commits), nil
 }
 
-// GetAuthorsByCommits returns the contributors and their commits they made.
-func GetAuthorsByCommits(repo *git.Repository) (map[Author][]object.Commit, error) {
-	head, err := ValidateRepository(repo)
-	if err != nil || head == nil {
-		return nil, fmt.Errorf("GetAuthorsByCommits: received an invalid repository: %w", err)
+// GetAuthorsByCommits returns the authors and their commits they made.
+func (r *RepoReader) GetAuthorsByCommits() (map[Author][]object.Commit, error) {
+	head, err := r.repository.Head()
+	if err != nil {
+		defaultContributorCommits := make(map[Author][]object.Commit)
+		return defaultContributorCommits, fmt.Errorf("GetAuthorsByCommits: unable to get the repository head: %w", err)
 	}
 
-	contributorCommits := make(map[Author][]object.Commit)
-
-	cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+	commits := make([]*object.Commit, 0)
+	cIter, _ := r.repository.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
 	_ = cIter.ForEach(func(c *object.Commit) error {
-		contributor := Author{
-			Name:  c.Author.Name,
-			Email: c.Author.Email,
-		}
-
-		contributorCommits[contributor] = append(contributorCommits[contributor], *c)
+		commits = append(commits, c)
 		return nil
 	})
 
-	return contributorCommits, nil
+	authorCommits := r.getAuthorsByCommits(commits)
+
+	return authorCommits, nil
+}
+
+// GetLicense attempts to determine the license type of the repository.
+func (r *RepoReader) GetLicense() (string, error) {
+	wt, err := r.repository.Worktree()
+	if err != nil {
+		return "", fmt.Errorf("GetLicense: unable to get the worktree from the repository: %w", err)
+	}
+
+	fs := wt.Filesystem
+
+	license, err := r.getLicenseFromRoot(fs)
+	if err != nil {
+		return "", fmt.Errorf("GetLicense: error getting license from root: %w", err)
+	}
+
+	return license, err
 }
 
 // ValidateRepository validates the given repository and returns the head of the repository if valid and a nil error.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/djyuhn/gitcha/gittest"
 	"github.com/djyuhn/gitcha/reporeader"
@@ -205,7 +204,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	})
 }
 
-func TestGetCreatedDate(t *testing.T) {
+func TestRepoReader_GetCreatedDate(t *testing.T) {
 	t.Parallel()
 
 	t.Run("given repository with commits should return time of oldest commit", func(t *testing.T) {
@@ -224,50 +223,19 @@ func TestGetCreatedDate(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
 		expected := commits[len(commits)-1].Author.When
-		actual, err := reporeader.GetCreatedDate(repo)
+		actual, err := repoReader.GetCreatedDate()
 
 		assert.Equal(t, expected, actual)
 		assert.NoError(t, err)
 	})
-
-	t.Run("given invalid repository should return default time and error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedTime := time.Time{}
-		expectedErr := fmt.Errorf("GetCreatedDate: received an invalid repository")
-
-		actualTime, err := reporeader.GetCreatedDate(nil)
-
-		assert.Equal(t, expectedTime, actualTime)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
 }
 
-func TestGetContributorsByCommits(t *testing.T) {
+func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 	t.Parallel()
-
-	t.Run("given an invalid repository should return empty map and error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := fmt.Errorf("GetAuthorsByCommits: received an invalid repository")
-		actual, err := reporeader.GetAuthorsByCommits(nil)
-
-		assert.Nil(t, actual)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given single commit author should return one contributor", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
-		require.NoError(t, err)
-
-		actual, err := reporeader.GetAuthorsByCommits(repo)
-
-		assert.NoError(t, err)
-		assert.Len(t, actual, 1)
-	})
 
 	t.Run("given single commit author should return map with author as key", func(t *testing.T) {
 		t.Parallel()
@@ -275,12 +243,15 @@ func TestGetContributorsByCommits(t *testing.T) {
 		repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
 		expectedAuthor := reporeader.Author{
 			Name:  "gitcha-author-name",
 			Email: "gitcha-author-email@gitcha.com",
 		}
+		actual, err := repoReader.GetAuthorsByCommits()
 
-		actual, err := reporeader.GetAuthorsByCommits(repo)
 		assert.NoError(t, err)
 		assert.Contains(t, actual, expectedAuthor)
 	})
@@ -289,6 +260,9 @@ func TestGetContributorsByCommits(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
 		require.NoError(t, err)
 
 		expectedAuthor1 := reporeader.Author{
@@ -308,13 +282,53 @@ func TestGetContributorsByCommits(t *testing.T) {
 			Email: "gitcha4@gitcha.com",
 		}
 
-		actual, err := reporeader.GetAuthorsByCommits(repo)
+		actual, err := repoReader.GetAuthorsByCommits()
 		assert.NoError(t, err)
 
 		assert.Contains(t, actual, expectedAuthor1)
 		assert.Contains(t, actual, expectedAuthor2)
 		assert.Contains(t, actual, expectedAuthor3)
 		assert.Contains(t, actual, expectedAuthor4)
+	})
+}
+
+func TestRepoReader_GetLicense(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given basic repository with LICENSE file at root should return MIT license and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetLicense()
+
+		assert.Equal(t, "MIT", actual)
+		assert.NoError(t, err)
+	})
+
+	t.Run("given repository with no LICENSE file should return NO LICENSE string and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+		fs := wt.Filesystem
+
+		require.NoError(t, fs.Remove("LICENSE"))
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetLicense()
+
+		assert.Equal(t, "NO LICENSE", actual)
+		assert.NoError(t, err)
 	})
 }
 
