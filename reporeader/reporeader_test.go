@@ -15,6 +15,76 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewRepoReader(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given a directory with an invalid repository should return nil RepoReader and error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		emptyRepo, err := gittest.CreateEmptyRepo(ctx, t)
+		require.Error(t, err)
+		wt, err := emptyRepo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		expectedError := fmt.Errorf("NewRepoReader: error detected in attempting to open repository")
+		reader, err := reporeader.NewRepoReader(fs.Root())
+
+		assert.Nil(t, reader)
+		assert.Errorf(t, err, expectedError.Error())
+	})
+
+	t.Run("given a directory with a repository should return RepoReader and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+		wt, err := basicRepo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		reader, err := reporeader.NewRepoReader(fs.Root())
+
+		assert.NotNil(t, reader)
+		assert.NoError(t, err)
+	})
+}
+
+func TestNewRepoReaderRepository(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given an invalid repository should return nil RepoReader and error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		emptyRepo, err := gittest.CreateEmptyRepo(ctx, t)
+		require.Error(t, err)
+
+		expectedError := fmt.Errorf("NewRepoReaderRepository: received an invalid repository")
+		reader, err := reporeader.NewRepoReaderRepository(emptyRepo)
+
+		assert.Nil(t, reader)
+		assert.Errorf(t, err, expectedError.Error())
+	})
+
+	t.Run("given a valid repository should return RepoReader and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		reader, err := reporeader.NewRepoReaderRepository(basicRepo)
+
+		assert.NotNil(t, reader)
+		assert.NoError(t, err)
+	})
+}
+
 func TestGetCreatedDate(t *testing.T) {
 	t.Parallel()
 
