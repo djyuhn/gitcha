@@ -85,6 +85,90 @@ func TestNewRepoReaderRepository(t *testing.T) {
 	})
 }
 
+func TestRepoReader_GetRepoDetails(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given repository with commits should return time of oldest commit and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		cIter, err := repo.Log(&git.LogOptions{Order: git.LogOrderCommitterTime})
+		require.NoError(t, err)
+
+		commits := make([]*object.Commit, 0)
+		err = cIter.ForEach(func(c *object.Commit) error {
+			commits = append(commits, c)
+			return nil
+		})
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		expected := commits[len(commits)-1].Author.When
+		actual, err := repoReader.GetRepoDetails()
+
+		assert.Equal(t, expected, actual.CreatedDate)
+		assert.NoError(t, err)
+	})
+
+	t.Run("given single commit author should return map with author as key", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		expectedAuthor := reporeader.Author{
+			Name:  "gitcha-author-name",
+			Email: "gitcha-author-email@gitcha.com",
+		}
+		actual, err := repoReader.GetRepoDetails()
+
+		assert.NoError(t, err)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor)
+	})
+
+	t.Run("given multiple commit authors should return map with each author as key", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
+		require.NoError(t, err)
+
+		expectedAuthor1 := reporeader.Author{
+			Name:  "Gitcha One",
+			Email: "gitcha1@gitcha.com",
+		}
+		expectedAuthor2 := reporeader.Author{
+			Name:  "Gitcha Two",
+			Email: "gitcha2@gitcha.com",
+		}
+		expectedAuthor3 := reporeader.Author{
+			Name:  "Gitcha Three",
+			Email: "gitcha3@gitcha.com",
+		}
+		expectedAuthor4 := reporeader.Author{
+			Name:  "Gitcha Four",
+			Email: "gitcha4@gitcha.com",
+		}
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetRepoDetails()
+		assert.NoError(t, err)
+
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor1)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor2)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor3)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor4)
+	})
+}
+
 func TestGetCreatedDate(t *testing.T) {
 	t.Parallel()
 
