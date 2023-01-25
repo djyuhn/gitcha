@@ -13,6 +13,16 @@ type RepoReader struct {
 	repository *git.Repository
 }
 
+type RepoDetails struct {
+	CreatedDate    time.Time
+	AuthorsCommits map[Author][]object.Commit
+}
+
+type Author struct {
+	Name  string
+	Email string
+}
+
 func NewRepoReader(dir string) (*RepoReader, error) {
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
@@ -31,6 +41,62 @@ func NewRepoReaderRepository(repo *git.Repository) (*RepoReader, error) {
 	return &RepoReader{repository: repo}, nil
 }
 
+func (r *RepoReader) GetRepoDetails() (RepoDetails, error) {
+	head, err := r.repository.Head()
+	if err != nil {
+		return RepoDetails{}, fmt.Errorf("GetRepoDetails: unable to get the repository head: %w", err)
+	}
+
+	commits := make([]*object.Commit, 0)
+	cIter, _ := r.repository.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+	_ = cIter.ForEach(func(c *object.Commit) error {
+		commits = append(commits, c)
+		return nil
+	})
+
+	createdDate := r.getCreatedDate(commits)
+	authorsCommits := r.getAuthorsByCommits(commits)
+
+	details := RepoDetails{
+		CreatedDate:    createdDate,
+		AuthorsCommits: authorsCommits,
+	}
+
+	return details, nil
+}
+
+func (r *RepoReader) getCreatedDate(commits []*object.Commit) time.Time {
+	if len(commits) == 0 {
+		return time.Time{}
+	}
+
+	oldestTime := commits[0].Author.When
+
+	for _, commit := range commits {
+		commitTime := commit.Author.When
+		if commitTime.Before(oldestTime) {
+			oldestTime = commit.Author.When
+		}
+	}
+
+	return oldestTime
+}
+
+func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]object.Commit {
+	contributorCommits := make(map[Author][]object.Commit)
+
+	for _, commit := range commits {
+		author := Author{
+			commit.Author.Name,
+			commit.Author.Email,
+		}
+
+		contributorCommits[author] = append(contributorCommits[author], *commit)
+	}
+
+	return contributorCommits
+}
+
 // GetCreatedDate returns the time that the repository was first created.
 func GetCreatedDate(repo *git.Repository) (time.Time, error) {
 	head, err := ValidateRepository(repo)
@@ -46,11 +112,6 @@ func GetCreatedDate(repo *git.Repository) (time.Time, error) {
 	})
 
 	return commits[len(commits)-1].Author.When, nil
-}
-
-type Author struct {
-	Name  string
-	Email string
 }
 
 // GetAuthorsByCommits returns the contributors and their commits they made.
