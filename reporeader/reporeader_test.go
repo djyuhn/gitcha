@@ -113,23 +113,50 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("given single commit author should return map with author as key", func(t *testing.T) {
+	t.Run("given single commit author should return map with author commits", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
-		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		head, err := repo.Head()
 		require.NoError(t, err)
+
+		commits := make([]*object.Commit, 0)
+		cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+		_ = cIter.ForEach(func(c *object.Commit) error {
+			commits = append(commits, c)
+			return nil
+		})
+
+		expectedCommits := make([]reporeader.Commit, 0, len(commits))
+		for _, commit := range commits {
+			author := reporeader.Author{
+				commit.Author.Name,
+				commit.Author.Email,
+			}
+			commit := reporeader.Commit{
+				Author:  author,
+				Message: commit.Message,
+				Hash:    commit.Hash.String(),
+			}
+
+			expectedCommits = append(expectedCommits, commit)
+		}
 
 		expectedAuthor := reporeader.Author{
 			Name:  "gitcha-author-name",
 			Email: "gitcha-author-email@gitcha.com",
 		}
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
 		actual, err := repoReader.GetRepoDetails()
 
 		assert.NoError(t, err)
 		assert.Contains(t, actual.AuthorsCommits, expectedAuthor)
+		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor], expectedCommits)
 	})
 
 	t.Run("given multiple commit authors should return map with each author as key", func(t *testing.T) {
@@ -237,23 +264,50 @@ func TestRepoReader_GetCreatedDate(t *testing.T) {
 func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 	t.Parallel()
 
-	t.Run("given single commit author should return map with author as key", func(t *testing.T) {
+	t.Run("given single commit author should return map with author commits", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
-		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		head, err := repo.Head()
 		require.NoError(t, err)
+
+		commits := make([]*object.Commit, 0)
+		cIter, _ := repo.Log(&git.LogOptions{From: head.Hash(), Order: git.LogOrderCommitterTime})
+		_ = cIter.ForEach(func(c *object.Commit) error {
+			commits = append(commits, c)
+			return nil
+		})
+
+		expectedCommits := make([]reporeader.Commit, 0, len(commits))
+		for _, commit := range commits {
+			author := reporeader.Author{
+				commit.Author.Name,
+				commit.Author.Email,
+			}
+			commit := reporeader.Commit{
+				Author:  author,
+				Message: commit.Message,
+				Hash:    commit.Hash.String(),
+			}
+
+			expectedCommits = append(expectedCommits, commit)
+		}
 
 		expectedAuthor := reporeader.Author{
 			Name:  "gitcha-author-name",
 			Email: "gitcha-author-email@gitcha.com",
 		}
-		actual, err := repoReader.GetAuthorsByCommits()
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetRepoDetails()
 
 		assert.NoError(t, err)
-		assert.Contains(t, actual, expectedAuthor)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor)
+		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor], expectedCommits)
 	})
 
 	t.Run("given multiple commit authors should return map with each author as key", func(t *testing.T) {
