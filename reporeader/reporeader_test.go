@@ -167,6 +167,42 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		assert.Contains(t, actual.AuthorsCommits, expectedAuthor3)
 		assert.Contains(t, actual.AuthorsCommits, expectedAuthor4)
 	})
+
+	t.Run("given basic repository with LICENSE file at root should return MIT license and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetRepoDetails()
+
+		assert.Equal(t, "MIT", actual.License)
+		assert.NoError(t, err)
+	})
+
+	t.Run("given repository with no LICENSE file should return NO LICENSE string and nil error", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+		fs := wt.Filesystem
+
+		require.NoError(t, fs.Remove("LICENSE"))
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		actual, err := repoReader.GetRepoDetails()
+
+		assert.Equal(t, "NO LICENSE", actual.License)
+		assert.NoError(t, err)
+	})
 }
 
 func TestGetCreatedDate(t *testing.T) {

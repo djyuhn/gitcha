@@ -2,8 +2,11 @@ package reporeader
 
 import (
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/go-enry/go-license-detector/v4/licensedb"
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -16,6 +19,7 @@ type RepoReader struct {
 type RepoDetails struct {
 	CreatedDate    time.Time
 	AuthorsCommits map[Author][]object.Commit
+	License        string
 }
 
 type Author struct {
@@ -54,12 +58,23 @@ func (r *RepoReader) GetRepoDetails() (RepoDetails, error) {
 		return nil
 	})
 
+	wt, err := r.repository.Worktree()
+	if err != nil {
+		return RepoDetails{}, fmt.Errorf("GetRepoDetails: unable to get the worktree from the repository: %w", err)
+	}
+
 	createdDate := r.getCreatedDate(commits)
 	authorsCommits := r.getAuthorsByCommits(commits)
+
+	license, err := r.getLicenseFromRoot(wt.Filesystem)
+	if err != nil {
+		return RepoDetails{}, fmt.Errorf("GetRepoDetails: unable to get the license for the repository: %w", err)
+	}
 
 	details := RepoDetails{
 		CreatedDate:    createdDate,
 		AuthorsCommits: authorsCommits,
+		License:        license,
 	}
 
 	return details, nil
@@ -95,6 +110,48 @@ func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]
 	}
 
 	return contributorCommits
+}
+
+func (r *RepoReader) getLicenseFromRoot(fs billy.Filesystem) (string, error) {
+	files, err := fs.ReadDir(".")
+	if err != nil {
+		return "", fmt.Errorf("getLicenseFromRoot: could not read root directory: %w", err)
+	}
+
+	var licenseInfo os.FileInfo
+	for _, file := range files {
+		if file.Name() == "LICENSE" {
+			licenseInfo = file
+			break
+		}
+	}
+	if licenseInfo == nil {
+		return "NO LICENSE", nil
+	}
+
+	licensePath := fs.Join(fs.Root(), licenseInfo.Name())
+
+	contents, err := os.ReadFile(licensePath)
+	if err != nil {
+		return "", fmt.Errorf("getLicenseFromRoot: could not read file from filepath %s: %w", licensePath, err)
+	}
+
+	results := licensedb.InvestigateLicenseText(contents)
+
+	type licenseConfidence struct {
+		license    string
+		confidence float32
+	}
+
+	bestConfidence := licenseConfidence{}
+	for license, confidence := range results {
+		if bestConfidence.confidence < confidence {
+			bestConfidence.license = license
+			bestConfidence.confidence = confidence
+		}
+	}
+
+	return bestConfidence.license, nil
 }
 
 // GetCreatedDate returns the time that the repository was first created.
