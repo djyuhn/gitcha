@@ -18,13 +18,19 @@ type RepoReader struct {
 
 type RepoDetails struct {
 	CreatedDate    time.Time
-	AuthorsCommits map[Author][]object.Commit
+	AuthorsCommits map[Author][]Commit
 	License        string
 }
 
 type Author struct {
 	Name  string
 	Email string
+}
+
+type Commit struct {
+	Author  Author
+	Message string
+	Hash    string
 }
 
 func NewRepoReader(dir string) (*RepoReader, error) {
@@ -97,8 +103,8 @@ func (r *RepoReader) getCreatedDate(commits []*object.Commit) time.Time {
 	return oldestTime
 }
 
-func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]object.Commit {
-	contributorCommits := make(map[Author][]object.Commit)
+func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]Commit {
+	contributorCommits := make(map[Author][]Commit)
 
 	for _, commit := range commits {
 		author := Author{
@@ -106,7 +112,13 @@ func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]
 			commit.Author.Email,
 		}
 
-		contributorCommits[author] = append(contributorCommits[author], *commit)
+		commit := Commit{
+			Author:  author,
+			Message: commit.Message,
+			Hash:    commit.Hash.String(),
+		}
+
+		contributorCommits[author] = append(contributorCommits[author], commit)
 	}
 
 	return contributorCommits
@@ -172,10 +184,10 @@ func (r *RepoReader) GetCreatedDate() (time.Time, error) {
 }
 
 // GetAuthorsByCommits returns the authors and their commits they made.
-func (r *RepoReader) GetAuthorsByCommits() (map[Author][]object.Commit, error) {
+func (r *RepoReader) GetAuthorsByCommits() (map[Author][]Commit, error) {
 	head, err := r.repository.Head()
 	if err != nil {
-		defaultContributorCommits := make(map[Author][]object.Commit)
+		defaultContributorCommits := make(map[Author][]Commit)
 		return defaultContributorCommits, fmt.Errorf("GetAuthorsByCommits: unable to get the repository head: %w", err)
 	}
 
