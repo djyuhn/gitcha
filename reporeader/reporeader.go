@@ -9,6 +9,28 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
+type RepoReader struct {
+	repository *git.Repository
+}
+
+func NewRepoReader(dir string) (*RepoReader, error) {
+	repo, err := git.PlainOpen(dir)
+	if err != nil {
+		return nil, fmt.Errorf("NewRepoReader: error detected in attempting to open repository: %w", err)
+	}
+
+	return &RepoReader{repository: repo}, nil
+}
+
+func NewRepoReaderRepository(repo *git.Repository) (*RepoReader, error) {
+	_, err := ValidateRepository(repo)
+	if err != nil {
+		return nil, fmt.Errorf("NewRepoReaderRepository: received an invalid repository: %w", err)
+	}
+
+	return &RepoReader{repository: repo}, nil
+}
+
 // GetCreatedDate returns the time that the repository was first created.
 func GetCreatedDate(repo *git.Repository) (time.Time, error) {
 	head, err := ValidateRepository(repo)
