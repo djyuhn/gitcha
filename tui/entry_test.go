@@ -9,6 +9,7 @@ import (
 	"github.com/djyuhn/gitcha/reporeader"
 	"github.com/djyuhn/gitcha/tui"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,14 +61,46 @@ func TestEntryModel_Init(t *testing.T) {
 func TestEntryModel_Update(t *testing.T) {
 	t.Parallel()
 
-	t.Run("should return same model and nil msg", func(t *testing.T) {
+	t.Run("given nil msg should return same model and nil msg", func(t *testing.T) {
 		t.Parallel()
-		expectedModel := tui.EntryModel{}
 
-		model, cmd := expectedModel.Update(nil)
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
 
-		assert.Equal(t, expectedModel, model)
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		model, err := tui.NewEntryModel(repoReader)
+		require.NoError(t, err)
+
+		actual, cmd := model.Update(nil)
+
+		assert.Equal(t, model, actual)
 		assert.Nil(t, cmd)
+	})
+
+	t.Run("given Ctrl+C message should emit quit message", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		model, err := tui.NewEntryModel(repoReader)
+		require.NoError(t, err)
+
+		quitCmd := tea.KeyMsg{
+			Type: tea.KeyCtrlC,
+		}
+
+		actual, cmd := model.Update(quitCmd)
+
+		assert.Equal(t, model, actual)
+		assert.Equal(t, tea.Quit(), cmd())
 	})
 }
 
