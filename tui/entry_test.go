@@ -3,7 +3,9 @@ package tui_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/djyuhn/gitcha/gittest"
 	"github.com/djyuhn/gitcha/reporeader"
@@ -37,7 +39,7 @@ func TestNewEntryModel(t *testing.T) {
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
 		require.NoError(t, err)
 
-		expected := tui.EntryModel{RepoReader: repoReader}
+		expected := tui.EntryModel{RepoReader: *repoReader}
 		actual, err := tui.NewEntryModel(repoReader)
 
 		assert.Equal(t, expected, actual)
@@ -48,13 +50,29 @@ func TestNewEntryModel(t *testing.T) {
 func TestEntryModel_Init(t *testing.T) {
 	t.Parallel()
 
-	t.Run("should return nil command", func(t *testing.T) {
+	t.Run("should return RepoDetailsMsg", func(t *testing.T) {
 		t.Parallel()
-		model := tui.EntryModel{}
 
-		actual := model.Init()
+		ctx := context.Background()
+		repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
 
-		assert.Nil(t, actual)
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		entryModel, err := tui.NewEntryModel(repoReader)
+		require.NoError(t, err)
+
+		expectedDetails, expectedErr := repoReader.GetRepoDetails()
+
+		expectedMsg := tui.RepoDetailsMsg{
+			Err:         expectedErr,
+			RepoDetails: expectedDetails,
+		}
+		cmd := entryModel.Init()
+		require.NotNil(t, cmd)
+
+		assert.Equal(t, expectedMsg, cmd())
 	})
 }
 
@@ -102,17 +120,69 @@ func TestEntryModel_Update(t *testing.T) {
 		assert.Equal(t, model, actual)
 		assert.Equal(t, tea.Quit(), cmd())
 	})
+
+	t.Run("given RepoDetailsMsg with no error should update entry model RepoDetails", func(t *testing.T) {
+		t.Parallel()
+
+		repoDetails := reporeader.RepoDetails{
+			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+			AuthorsCommits: nil,
+			License:        "SOME LICENSE",
+		}
+
+		msg := tui.RepoDetailsMsg{
+			Err:         nil,
+			RepoDetails: repoDetails,
+		}
+
+		model := tui.EntryModel{}
+
+		updatedModel, cmd := model.Update(msg)
+
+		actual, ok := updatedModel.(tui.EntryModel)
+		require.True(t, ok)
+
+		assert.Equal(t, msg.RepoDetails, actual.RepoDetails)
+		assert.Nil(t, cmd)
+	})
 }
 
 func TestEntryModel_View(t *testing.T) {
 	t.Parallel()
 
-	t.Run("should return Entry View string", func(t *testing.T) {
+	t.Run("should return repo details in separate lines", func(t *testing.T) {
 		t.Parallel()
-		model := tui.EntryModel{}
+
+		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		author := reporeader.Author{
+			Name:  "FirstName LastName",
+			Email: "authorname@gitcha.com",
+		}
+		commits := []reporeader.Commit{
+			{
+				Author:  author,
+				Message: "commit message",
+				Hash:    "someHash",
+			},
+		}
+		authorCommits[author] = commits
+
+		repoDetails := reporeader.RepoDetails{
+			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+			AuthorsCommits: authorCommits,
+			License:        "SOME LICENSE",
+		}
+		model := tui.EntryModel{
+			RepoDetails: repoDetails,
+		}
+
+		expectedView := strings.Builder{}
+		expectedView.WriteString(fmt.Sprintf("Repository Created Date - %s\n", repoDetails.CreatedDate.Format(time.RFC822)))
+		expectedView.WriteString(fmt.Sprintf("Repository License - %s\n", repoDetails.License))
+		expectedView.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d \n", author.Name, author.Email, len(commits)))
 
 		actual := model.View()
 
-		assert.Equal(t, "Entry View", actual)
+		assert.Equal(t, expectedView.String(), actual)
 	})
 }
