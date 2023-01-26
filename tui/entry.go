@@ -27,6 +27,15 @@ func (m EntryModel) Init() tea.Cmd {
 }
 
 func (m EntryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.Type == tea.KeyCtrlC {
+			return m, tea.Quit
+		}
+	default:
+		return m, nil
+	}
+
 	return m, nil
 }
 
