@@ -1,8 +1,23 @@
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"fmt"
+
+	"github.com/djyuhn/gitcha/reporeader"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type EntryModel struct {
+	RepoReader *reporeader.RepoReader
+}
+
+func NewEntryModel(repoReader *reporeader.RepoReader) (EntryModel, error) {
+	if repoReader == nil {
+		return EntryModel{}, fmt.Errorf("NewEntryModel: received a nil RepoReader")
+	}
+
+	return EntryModel{RepoReader: repoReader}, nil
 }
 
 var _ tea.Model = EntryModel{}

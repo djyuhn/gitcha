@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/djyuhn/gitcha/cmd/gitcha"
-	"github.com/djyuhn/gitcha/tui"
 
 	"github.com/spf13/cobra"
 )
@@ -16,12 +15,18 @@ type RootCmd struct {
 func NewRootCmd() RootCmd {
 	return RootCmd{
 		Command: cobra.Command{
-			Use:     "gitcha",
+			Use:     "gitcha [-D dir]",
 			Short:   "A command-line tool to get Git information.",
 			Long:    "Gitcha is a Git CLI tool to get Git information for repositories.",
 			Example: "gitcha",
+			Args:    cobra.MaximumNArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				app, err := gitcha.NewApp(tui.EntryModel{})
+				path, err := gitcha.GetDirectoryFromArgs(args)
+				if err != nil {
+					return err
+				}
+
+				app, err := gitcha.NewApp(path)
 				if err != nil {
 					return err
 				}
