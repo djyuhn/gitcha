@@ -7,13 +7,18 @@ import (
 
 	"github.com/djyuhn/gitcha/reporeader"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type EntryModel struct {
-	RepoReader reporeader.RepoReader
-
+	RepoReader  reporeader.RepoReader
 	RepoDetails reporeader.RepoDetails
+	RepoError   error
+
+	Spinner spinner.Model
+
+	IsLoading bool
 }
 
 func NewEntryModel(repoReader *reporeader.RepoReader) (EntryModel, error) {
@@ -21,7 +26,9 @@ func NewEntryModel(repoReader *reporeader.RepoReader) (EntryModel, error) {
 		return EntryModel{}, fmt.Errorf("NewEntryModel: received a nil RepoReader")
 	}
 
-	return EntryModel{RepoReader: *repoReader}, nil
+	sp := spinner.New()
+
+	return EntryModel{RepoReader: *repoReader, Spinner: sp, IsLoading: true}, nil
 }
 
 var _ tea.Model = EntryModel{}
@@ -31,8 +38,15 @@ type RepoDetailsMsg struct {
 	RepoDetails reporeader.RepoDetails
 }
 
+type LoadingRepoMsg struct {
+	IsLoading bool
+}
+
 func (m EntryModel) Init() tea.Cmd {
-	return m.processRepo()
+	return tea.Batch(
+		m.Spinner.Tick,
+		m.processRepo,
+	)
 }
 
 func (m EntryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -41,11 +55,20 @@ func (m EntryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Type == tea.KeyCtrlC {
 			return m, tea.Quit
 		}
-	case RepoDetailsMsg:
-		if msg.Err == nil {
-			m.RepoDetails = msg.RepoDetails
-			return m, nil
+	case spinner.TickMsg:
+		if m.IsLoading {
+			var cmd tea.Cmd
+			m.Spinner, cmd = m.Spinner.Update(msg)
+			return m, cmd
 		}
+		return m, nil
+	case RepoDetailsMsg:
+		m.RepoDetails = msg.RepoDetails
+		m.RepoError = msg.Err
+		return m, createLoadingRepoCmd(false)
+	case LoadingRepoMsg:
+		m.IsLoading = msg.IsLoading
+		return m, nil
 	default:
 		return m, nil
 	}
@@ -54,6 +77,12 @@ func (m EntryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m EntryModel) View() string {
+	if m.IsLoading {
+		return m.Spinner.View() + " Processing..."
+	}
+	if m.RepoError != nil {
+		return "An error occurred while processing the repository."
+	}
 	view := strings.Builder{}
 	view.WriteString(fmt.Sprintf("Repository Created Date - %s\n", m.RepoDetails.CreatedDate.Format(time.RFC822)))
 	view.WriteString(fmt.Sprintf("Repository License - %s\n", m.RepoDetails.License))
@@ -63,15 +92,19 @@ func (m EntryModel) View() string {
 	return view.String()
 }
 
-func (m EntryModel) processRepo() tea.Cmd {
+func (m EntryModel) processRepo() tea.Msg {
+	details, err := m.RepoReader.GetRepoDetails()
+
+	detailsMsg := RepoDetailsMsg{
+		Err:         err,
+		RepoDetails: details,
+	}
+
+	return detailsMsg
+}
+
+func createLoadingRepoCmd(isLoading bool) tea.Cmd {
 	return func() tea.Msg {
-		details, err := m.RepoReader.GetRepoDetails()
-
-		detailsMsg := RepoDetailsMsg{
-			Err:         err,
-			RepoDetails: details,
-		}
-
-		return detailsMsg
+		return LoadingRepoMsg{IsLoading: isLoading}
 	}
 }
