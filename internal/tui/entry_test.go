@@ -194,7 +194,7 @@ func TestEntryModel_Update(t *testing.T) {
 		assert.Equal(t, tea.Quit(), cmd())
 	})
 
-	t.Run("given RepoDetailsMsg and Err is nil should update entry model RepoDetails and return LoadingRepoMsg as false", func(t *testing.T) {
+	t.Run("given RepoDetailsMsg and Err is nil should update entry model repoDetails and return LoadingRepoMsg as false", func(t *testing.T) {
 		t.Parallel()
 
 		repoDetails := reporeader.RepoDetails{
