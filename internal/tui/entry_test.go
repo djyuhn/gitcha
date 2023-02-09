@@ -13,6 +13,7 @@ import (
 	"github.com/djyuhn/gitcha/gittest"
 	"github.com/djyuhn/gitcha/internal/reporeader"
 	"github.com/djyuhn/gitcha/internal/tui"
+	"github.com/djyuhn/gitcha/internal/tui/overview"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -194,33 +195,67 @@ func TestEntryModel_Update(t *testing.T) {
 		assert.Equal(t, tea.Quit(), cmd())
 	})
 
-	t.Run("given RepoDetailsMsg and Err is nil should update entry model repoDetails and return LoadingRepoMsg as false", func(t *testing.T) {
+	t.Run("given RepoDetailsMsg and Err is nil", func(t *testing.T) {
 		t.Parallel()
 
-		repoDetails := reporeader.RepoDetails{
-			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
-			AuthorsCommits: nil,
-			License:        "SOME LICENSE",
-		}
+		t.Run("should update entry model repoDetails and return LoadingRepoMsg as false", func(t *testing.T) {
+			t.Parallel()
 
-		msg := tui.RepoDetailsMsg{
-			Err:         nil,
-			RepoDetails: repoDetails,
-		}
-		LoadingRepoMsg := tui.LoadingRepoMsg{IsLoading: false}
+			repoDetails := reporeader.RepoDetails{
+				CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+				AuthorsCommits: nil,
+				License:        "SOME LICENSE",
+			}
 
-		model := tui.EntryModel{}
+			msg := tui.RepoDetailsMsg{
+				Err:         nil,
+				RepoDetails: repoDetails,
+			}
+			LoadingRepoMsg := tui.LoadingRepoMsg{IsLoading: false}
 
-		updatedModel, cmd := model.Update(msg)
+			model := tui.EntryModel{}
 
-		actual, ok := updatedModel.(tui.EntryModel)
-		require.True(t, ok)
+			updatedModel, cmd := model.Update(msg)
 
-		assert.Equal(t, msg.RepoDetails, actual.RepoDetails)
+			actual, ok := updatedModel.(tui.EntryModel)
+			require.True(t, ok)
 
-		require.NotNil(t, cmd)
-		require.IsType(t, tui.LoadingRepoMsg{}, cmd())
-		assert.Equal(t, LoadingRepoMsg, cmd())
+			assert.Equal(t, msg.RepoDetails, actual.RepoDetails)
+
+			require.NotNil(t, cmd)
+			require.IsType(t, tui.LoadingRepoMsg{}, cmd())
+			assert.Equal(t, LoadingRepoMsg, cmd())
+		})
+
+		t.Run("should update Overview model and return LoadingRepoMsg as false", func(t *testing.T) {
+			t.Parallel()
+
+			repoDetails := reporeader.RepoDetails{
+				CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+				AuthorsCommits: nil,
+				License:        "SOME LICENSE",
+			}
+
+			msg := tui.RepoDetailsMsg{
+				Err:         nil,
+				RepoDetails: repoDetails,
+			}
+			LoadingRepoMsg := tui.LoadingRepoMsg{IsLoading: false}
+
+			model := tui.EntryModel{}
+
+			expectedOverview := overview.NewOverview(repoDetails)
+			updatedModel, cmd := model.Update(msg)
+
+			actual, ok := updatedModel.(tui.EntryModel)
+			require.True(t, ok)
+
+			assert.Equal(t, expectedOverview, actual.Overview)
+
+			require.NotNil(t, cmd)
+			require.IsType(t, tui.LoadingRepoMsg{}, cmd())
+			assert.Equal(t, LoadingRepoMsg, cmd())
+		})
 	})
 
 	t.Run("given RepoDetailsMsg and Err is not nil should update entry model RepoErr and return LoadingRepoMsg as false", func(t *testing.T) {
@@ -322,7 +357,7 @@ func TestEntryModel_View(t *testing.T) {
 		assert.Contains(t, actual, expectedView)
 	})
 
-	t.Run("should return repo details in separate lines", func(t *testing.T) {
+	t.Run("given not loading should return Overview view", func(t *testing.T) {
 		t.Parallel()
 
 		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
@@ -345,16 +380,12 @@ func TestEntryModel_View(t *testing.T) {
 			License:        "SOME LICENSE",
 		}
 		model := tui.EntryModel{
-			RepoDetails: repoDetails,
+			IsLoading: false,
+			Overview:  overview.NewOverview(repoDetails),
 		}
-
-		expectedView := strings.Builder{}
-		expectedView.WriteString(fmt.Sprintf("Repository Created Date - %s\n", repoDetails.CreatedDate.Format(time.RFC822)))
-		expectedView.WriteString(fmt.Sprintf("Repository License - %s\n", repoDetails.License))
-		expectedView.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d \n", author.Name, author.Email, len(commits)))
 
 		actual := model.View()
 
-		assert.Equal(t, expectedView.String(), actual)
+		assert.Contains(t, actual, model.Overview.View())
 	})
 }
