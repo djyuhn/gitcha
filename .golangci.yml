@@ -11,7 +11,6 @@ linters-settings:
       - diagnostic
       - experimental
       - opinionated
-      - performance
       - style
   gocyclo:
     min-complexity: 15
