@@ -2,13 +2,12 @@ package tui
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/djyuhn/gitcha/internal/reporeader"
+	"github.com/djyuhn/gitcha/internal/tui/overview"
 )
 
 type EntryModel struct {
@@ -16,7 +15,8 @@ type EntryModel struct {
 	RepoDetails reporeader.RepoDetails
 	RepoError   error
 
-	Spinner spinner.Model
+	Spinner  spinner.Model
+	Overview overview.Overview
 
 	IsLoading bool
 }
@@ -65,6 +65,7 @@ func (m EntryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RepoDetailsMsg:
 		m.RepoDetails = msg.RepoDetails
 		m.RepoError = msg.Err
+		m.Overview = overview.NewOverview(msg.RepoDetails)
 		return m, createLoadingRepoCmd(false)
 	case LoadingRepoMsg:
 		m.IsLoading = msg.IsLoading
@@ -83,13 +84,8 @@ func (m EntryModel) View() string {
 	if m.RepoError != nil {
 		return "An error occurred while processing the repository."
 	}
-	view := strings.Builder{}
-	view.WriteString(fmt.Sprintf("Repository Created Date - %s\n", m.RepoDetails.CreatedDate.Format(time.RFC822)))
-	view.WriteString(fmt.Sprintf("Repository License - %s\n", m.RepoDetails.License))
-	for author, commits := range m.RepoDetails.AuthorsCommits {
-		view.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d \n", author.Name, author.Email, len(commits)))
-	}
-	return view.String()
+
+	return m.Overview.View()
 }
 
 func (m EntryModel) processRepo() tea.Msg {
