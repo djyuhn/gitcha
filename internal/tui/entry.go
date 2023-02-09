@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/djyuhn/gitcha/reporeader"
-
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/djyuhn/gitcha/internal/reporeader"
 )
 
 type EntryModel struct {

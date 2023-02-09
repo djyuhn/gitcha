@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/djyuhn/gitcha/reporeader"
-	"github.com/djyuhn/gitcha/tui"
-
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/djyuhn/gitcha/internal/reporeader"
+	"github.com/djyuhn/gitcha/internal/tui"
 )
 
 type Program interface {

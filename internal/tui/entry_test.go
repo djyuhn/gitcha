@@ -7,12 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/djyuhn/gitcha/gittest"
-	"github.com/djyuhn/gitcha/reporeader"
-	"github.com/djyuhn/gitcha/tui"
-
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/internal/reporeader"
+	"github.com/djyuhn/gitcha/internal/tui"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
