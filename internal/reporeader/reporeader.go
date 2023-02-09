@@ -2,10 +2,10 @@ package reporeader
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/go-enry/go-license-detector/v4/licensedb"
+	"github.com/go-enry/go-license-detector/v4/licensedb/filer"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -125,30 +125,18 @@ func (r *RepoReader) getAuthorsByCommits(commits []*object.Commit) map[Author][]
 }
 
 func (r *RepoReader) getLicenseFromRoot(fs billy.Filesystem) (string, error) {
-	files, err := fs.ReadDir(".")
+	path, err := filer.FromDirectory(fs.Root())
 	if err != nil {
 		return "", fmt.Errorf("getLicenseFromRoot: could not read root directory: %w", err)
 	}
 
-	var licenseInfo os.FileInfo
-	for _, file := range files {
-		if file.Name() == "LICENSE" {
-			licenseInfo = file
-			break
-		}
-	}
-	if licenseInfo == nil {
-		return "NO LICENSE", nil
-	}
-
-	licensePath := fs.Join(fs.Root(), licenseInfo.Name())
-
-	contents, err := os.ReadFile(licensePath)
+	results, err := licensedb.Detect(path)
 	if err != nil {
-		return "", fmt.Errorf("getLicenseFromRoot: could not read file from filepath %s: %w", licensePath, err)
+		if err == licensedb.ErrNoLicenseFound {
+			return "NO LICENSE", nil
+		}
+		return "", fmt.Errorf("getLicenseFromRoot: could not detect license: %w", err)
 	}
-
-	results := licensedb.InvestigateLicenseText(contents)
 
 	type licenseConfidence struct {
 		license    string
@@ -156,10 +144,10 @@ func (r *RepoReader) getLicenseFromRoot(fs billy.Filesystem) (string, error) {
 	}
 
 	bestConfidence := licenseConfidence{}
-	for license, confidence := range results {
-		if bestConfidence.confidence < confidence {
+	for license, match := range results {
+		if bestConfidence.confidence < match.Confidence {
 			bestConfidence.license = license
-			bestConfidence.confidence = confidence
+			bestConfidence.confidence = match.Confidence
 		}
 	}
 
