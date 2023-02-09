@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -36,6 +37,8 @@ func (o Overview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (o Overview) View() string {
 	view := strings.Builder{}
+	view.WriteString(fmt.Sprintf("Repository Created Date - %s\n", o.RepoDetails.CreatedDate.Format(time.RFC822)))
+	view.WriteString(fmt.Sprintf("Repository License - %s\n", o.RepoDetails.License))
 	if len(o.orderedAuthorsByCommitCount) < topAuthorCount {
 		for _, pair := range o.orderedAuthorsByCommitCount {
 			view.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", pair.Author.Name, pair.Author.Email, len(pair.Commits)))

@@ -101,7 +101,7 @@ func TestOverview_View(t *testing.T) {
 		}
 		actual := model.View()
 
-		assert.Equal(t, expectedView.String(), actual)
+		assert.Contains(t, actual, expectedView.String())
 	})
 
 	t.Run("given only 1 author should return only 1 author and their commit count in view", func(t *testing.T) {
@@ -134,7 +134,43 @@ func TestOverview_View(t *testing.T) {
 		expectedView := fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", author.Name, author.Email, commitCount)
 		actual := model.View()
 
-		assert.Equal(t, expectedView, actual)
+		assert.Contains(t, actual, expectedView)
+	})
+
+	t.Run("given repository created date should return created date formatted as RFC822 in view", func(t *testing.T) {
+		t.Parallel()
+
+		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		repoDetails := reporeader.RepoDetails{
+			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+			AuthorsCommits: authorCommits,
+			License:        "SOME LICENSE",
+		}
+		model := overview.NewOverview(repoDetails)
+
+		expectedView := fmt.Sprintf("Repository Created Date - %s\n", repoDetails.CreatedDate.Format(time.RFC822))
+
+		actual := model.View()
+
+		assert.Contains(t, actual, expectedView)
+	})
+
+	t.Run("given license should return license in view", func(t *testing.T) {
+		t.Parallel()
+
+		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		repoDetails := reporeader.RepoDetails{
+			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+			AuthorsCommits: authorCommits,
+			License:        "SOME LICENSE",
+		}
+		model := overview.NewOverview(repoDetails)
+
+		expectedView := fmt.Sprintf("Repository License - %s\n", repoDetails.License)
+
+		actual := model.View()
+
+		assert.Contains(t, actual, expectedView)
 	})
 }
 
