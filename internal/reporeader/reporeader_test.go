@@ -132,8 +132,8 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		expectedCommits := make([]reporeader.Commit, 0, len(commits))
 		for _, commit := range commits {
 			author := reporeader.Author{
-				commit.Author.Name,
-				commit.Author.Email,
+				Name:  commit.Author.Name,
+				Email: commit.Author.Email,
 			}
 			commit := reporeader.Commit{
 				Author:  author,
@@ -155,11 +155,11 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		actual, err := repoReader.GetRepoDetails()
 
 		assert.NoError(t, err)
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor)
-		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor], expectedCommits)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor.Email)
+		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor.Email], expectedCommits)
 	})
 
-	t.Run("given multiple commit authors should return map with each author as key", func(t *testing.T) {
+	t.Run("given multiple commit authors should return map with each author email as key", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
@@ -188,10 +188,10 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		actual, err := repoReader.GetRepoDetails()
 		assert.NoError(t, err)
 
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor1)
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor2)
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor3)
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor4)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor1.Email)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor2.Email)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor3.Email)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor4.Email)
 	})
 
 	t.Run("given basic repository with LICENSE file at root should return MIT license and nil error", func(t *testing.T) {
@@ -283,8 +283,8 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 		expectedCommits := make([]reporeader.Commit, 0, len(commits))
 		for _, commit := range commits {
 			author := reporeader.Author{
-				commit.Author.Name,
-				commit.Author.Email,
+				Name:  commit.Author.Name,
+				Email: commit.Author.Email,
 			}
 			commit := reporeader.Commit{
 				Author:  author,
@@ -306,11 +306,11 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 		actual, err := repoReader.GetRepoDetails()
 
 		assert.NoError(t, err)
-		assert.Contains(t, actual.AuthorsCommits, expectedAuthor)
-		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor], expectedCommits)
+		assert.Contains(t, actual.AuthorsCommits, expectedAuthor.Email)
+		assert.ElementsMatch(t, actual.AuthorsCommits[expectedAuthor.Email], expectedCommits)
 	})
 
-	t.Run("given multiple commit authors should return map with each author as key", func(t *testing.T) {
+	t.Run("given multiple commit authors should return map with each author email as key", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
@@ -339,10 +339,47 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 		actual, err := repoReader.GetAuthorsByCommits()
 		assert.NoError(t, err)
 
-		assert.Contains(t, actual, expectedAuthor1)
-		assert.Contains(t, actual, expectedAuthor2)
-		assert.Contains(t, actual, expectedAuthor3)
-		assert.Contains(t, actual, expectedAuthor4)
+		assert.Contains(t, actual, expectedAuthor1.Email)
+		assert.Contains(t, actual, expectedAuthor2.Email)
+		assert.Contains(t, actual, expectedAuthor3.Email)
+		assert.Contains(t, actual, expectedAuthor4.Email)
+	})
+
+	t.Run("given multiple commit authors with pseudonyms should return map with each author email as key and the total number of their commits", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+		repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
+		require.NoError(t, err)
+
+		repoReader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		const expectedAuthorEmail1 = "gitcha1@gitcha.com"
+		const expectedAuthorCommitCount1 = 1
+
+		const expectedAuthorEmail2 = "gitcha2@gitcha.com"
+		const expectedAuthorCommitCount2 = 2
+
+		const expectedAuthorEmail3 = "gitcha3@gitcha.com"
+		const expectedAuthorCommitCount3 = 3
+
+		const expectedAuthorEmail4 = "gitcha4@gitcha.com"
+		const expectedAuthorCommitCount4 = 4
+
+		actual, err := repoReader.GetAuthorsByCommits()
+		assert.NoError(t, err)
+
+		assert.Contains(t, actual, expectedAuthorEmail1)
+		assert.Len(t, actual[expectedAuthorEmail1], expectedAuthorCommitCount1)
+
+		assert.Contains(t, actual, expectedAuthorEmail2)
+		assert.Len(t, actual[expectedAuthorEmail2], expectedAuthorCommitCount2)
+
+		assert.Contains(t, actual, expectedAuthorEmail3)
+		assert.Len(t, actual[expectedAuthorEmail3], expectedAuthorCommitCount3)
+
+		assert.Contains(t, actual, expectedAuthorEmail4)
+		assert.Len(t, actual[expectedAuthorEmail4], expectedAuthorCommitCount4)
 	})
 }
 
