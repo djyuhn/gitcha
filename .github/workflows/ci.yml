@@ -14,21 +14,19 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3
       - name: Setup go
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v3
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3.3.1
-        with:
-          version: latest
+        uses: golangci/golangci-lint-action@v3
   test:
     name: Run tests
     runs-on: 'ubuntu-latest'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3
       - name: Setup go
-        uses: actions/setup-go@v3.2.0
+        uses: actions/setup-go@v3
       - name: Run script file
         run: |
           chmod +x ./setup/setup.sh
