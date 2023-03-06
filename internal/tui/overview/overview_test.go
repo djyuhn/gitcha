@@ -67,10 +67,10 @@ func TestOverview_View(t *testing.T) {
 	t.Run("given multiple authors should return view with top 3 authors by commit count", func(t *testing.T) {
 		t.Parallel()
 
-		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		authorCommits := make(map[string][]reporeader.Commit)
 		// Create 10 authors with increasing commit numbers
 		for i := 1; i < 11; i++ {
-			authorName := fmt.Sprintf("Author %d", i)
+			authorName := fmt.Sprintf("AuthorEmail %d", i)
 			authorEmail := fmt.Sprintf("author%d@email.com", i)
 			author := reporeader.Author{
 				Name:  authorName,
@@ -85,7 +85,7 @@ func TestOverview_View(t *testing.T) {
 				}
 				commits = append(commits, commit)
 			}
-			authorCommits[author] = commits
+			authorCommits[author.Email] = commits
 		}
 
 		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
@@ -94,10 +94,10 @@ func TestOverview_View(t *testing.T) {
 		orderedAuthors := getSortedAuthorsByCommitCount(authorCommits)
 		expectedView := strings.Builder{}
 		for i := 0; i < 3; i++ {
-			name := orderedAuthors[i].Author.Name
-			email := orderedAuthors[i].Author.Email
+			name := orderedAuthors[i].AuthorName
+			email := orderedAuthors[i].AuthorEmail
 			count := len(orderedAuthors[i].Commits)
-			expectedView.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", name, email, count))
+			expectedView.WriteString(fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", name, email, count))
 		}
 		actual := model.View()
 
@@ -107,9 +107,9 @@ func TestOverview_View(t *testing.T) {
 	t.Run("given only 1 author should return only 1 author and their commit count in view", func(t *testing.T) {
 		t.Parallel()
 
-		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		authorCommits := make(map[string][]reporeader.Commit)
 
-		authorName := "Author"
+		authorName := "AuthorEmail"
 		authorEmail := "author@email.com"
 		author := reporeader.Author{
 			Name:  authorName,
@@ -126,12 +126,47 @@ func TestOverview_View(t *testing.T) {
 			}
 			commits = append(commits, commit)
 		}
-		authorCommits[author] = commits
+		authorCommits[author.Email] = commits
 
 		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
 		model := overview.NewOverview(repoDetails)
 
-		expectedView := fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", author.Name, author.Email, commitCount)
+		expectedView := fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", author.Name, author.Email, commitCount)
+		actual := model.View()
+
+		assert.Contains(t, actual, expectedView)
+	})
+
+	t.Run("given only 1 author with multiple names should return only 1 author and the name of their last commit in view", func(t *testing.T) {
+		t.Parallel()
+
+		authorCommits := make(map[string][]reporeader.Commit)
+
+		authorName := "Author Name"
+		authorEmail := "author@email.com"
+
+		const commitCount = 10
+		commits := make([]reporeader.Commit, 0, commitCount)
+		for j := 0; j < commitCount; j++ {
+			author := reporeader.Author{
+				Name:  fmt.Sprintf("%s%d", authorName, j),
+				Email: authorEmail,
+			}
+			commit := reporeader.Commit{
+				Author:  author,
+				Message: fmt.Sprintf("Message %d", j),
+				Hash:    fmt.Sprintf("Hash %d", j),
+			}
+			commits = append(commits, commit)
+		}
+		authorCommits[authorEmail] = commits
+
+		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
+		model := overview.NewOverview(repoDetails)
+
+		expectedName := fmt.Sprintf("%s%d", authorName, commitCount-1)
+
+		expectedView := fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", expectedName, authorEmail, commitCount)
 		actual := model.View()
 
 		assert.Contains(t, actual, expectedView)
@@ -140,7 +175,7 @@ func TestOverview_View(t *testing.T) {
 	t.Run("given repository created date should return created date formatted as RFC822 in view", func(t *testing.T) {
 		t.Parallel()
 
-		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		authorCommits := make(map[string][]reporeader.Commit)
 		repoDetails := reporeader.RepoDetails{
 			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
 			AuthorsCommits: authorCommits,
@@ -158,7 +193,7 @@ func TestOverview_View(t *testing.T) {
 	t.Run("given license should return license in view", func(t *testing.T) {
 		t.Parallel()
 
-		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		authorCommits := make(map[string][]reporeader.Commit)
 		repoDetails := reporeader.RepoDetails{
 			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
 			AuthorsCommits: authorCommits,
@@ -174,12 +209,16 @@ func TestOverview_View(t *testing.T) {
 	})
 }
 
-func getSortedAuthorsByCommitCount(authorCommits map[reporeader.Author][]reporeader.Commit) []overview.AuthorCommitsPair {
+func getSortedAuthorsByCommitCount(authorCommits map[string][]reporeader.Commit) []overview.AuthorCommitsPair {
 	authorCommitPairs := make([]overview.AuthorCommitsPair, 0, len(authorCommits))
-	for author, commits := range authorCommits {
+	for email, commits := range authorCommits {
+		if len(commits) == 0 {
+			continue
+		}
 		pair := overview.AuthorCommitsPair{
-			Author:  author,
-			Commits: commits,
+			AuthorName:  commits[0].Author.Name,
+			AuthorEmail: email,
+			Commits:     commits,
 		}
 		authorCommitPairs = append(authorCommitPairs, pair)
 	}

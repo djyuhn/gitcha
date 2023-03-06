@@ -360,7 +360,7 @@ func TestEntryModel_View(t *testing.T) {
 	t.Run("given not loading should return Overview view", func(t *testing.T) {
 		t.Parallel()
 
-		authorCommits := make(map[reporeader.Author][]reporeader.Commit)
+		authorCommits := make(map[string][]reporeader.Commit)
 		author := reporeader.Author{
 			Name:  "FirstName LastName",
 			Email: "authorname@gitcha.com",
@@ -372,7 +372,7 @@ func TestEntryModel_View(t *testing.T) {
 				Hash:    "someHash",
 			},
 		}
-		authorCommits[author] = commits
+		authorCommits[author.Email] = commits
 
 		repoDetails := reporeader.RepoDetails{
 			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),

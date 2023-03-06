@@ -41,14 +41,14 @@ func (o Overview) View() string {
 	view.WriteString(fmt.Sprintf("Repository License - %s\n", o.RepoDetails.License))
 	if len(o.orderedAuthorsByCommitCount) < topAuthorCount {
 		for _, pair := range o.orderedAuthorsByCommitCount {
-			view.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", pair.Author.Name, pair.Author.Email, len(pair.Commits)))
+			view.WriteString(fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", pair.AuthorName, pair.AuthorEmail, len(pair.Commits)))
 		}
 	} else {
 		for i := 0; i < topAuthorCount; i++ {
-			name := o.orderedAuthorsByCommitCount[i].Author.Name
-			email := o.orderedAuthorsByCommitCount[i].Author.Email
+			name := o.orderedAuthorsByCommitCount[i].AuthorName
+			email := o.orderedAuthorsByCommitCount[i].AuthorEmail
 			count := len(o.orderedAuthorsByCommitCount[i].Commits)
-			view.WriteString(fmt.Sprintf("Author - %s : Email - %s : Commit count - %d\n", name, email, count))
+			view.WriteString(fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", name, email, count))
 		}
 	}
 
@@ -56,19 +56,24 @@ func (o Overview) View() string {
 }
 
 type AuthorCommitsPair struct {
-	Author  reporeader.Author
-	Commits []reporeader.Commit
+	AuthorName  string
+	AuthorEmail string
+	Commits     []reporeader.Commit
 }
 
 // getSortedAuthorsByCommitCount iterates through authorCommits and returns an ordered slice of AuthorCommitsPair.
 //
 // The slice is ordered by the highest to the lowest commit count.
-func getSortedAuthorsByCommitCount(authorCommits map[reporeader.Author][]reporeader.Commit) []AuthorCommitsPair {
+func getSortedAuthorsByCommitCount(authorCommits map[string][]reporeader.Commit) []AuthorCommitsPair {
 	authorCommitPairs := make([]AuthorCommitsPair, 0, len(authorCommits))
-	for author, commits := range authorCommits {
+	for email, commits := range authorCommits {
+		if len(commits) == 0 {
+			continue
+		}
 		pair := AuthorCommitsPair{
-			Author:  author,
-			Commits: commits,
+			AuthorName:  commits[len(commits)-1].Author.Name,
+			AuthorEmail: email,
+			Commits:     commits,
 		}
 		authorCommitPairs = append(authorCommitPairs, pair)
 	}
