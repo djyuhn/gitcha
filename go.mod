@@ -3,8 +3,10 @@ module github.com/djyuhn/gitcha
 go 1.19
 
 require (
+	github.com/catppuccin/go v0.2.0
 	github.com/charmbracelet/bubbles v0.15.0
 	github.com/charmbracelet/bubbletea v0.23.1
+	github.com/charmbracelet/lipgloss v0.6.0
 	github.com/go-enry/go-license-detector/v4 v4.3.0
 	github.com/go-git/go-billy/v5 v5.3.1
 	github.com/go-git/go-git/v5 v5.4.2
@@ -21,7 +23,6 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
-	github.com/charmbracelet/lipgloss v0.6.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
