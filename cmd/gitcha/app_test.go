@@ -1,6 +1,7 @@
 package gitcha_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -9,24 +10,11 @@ import (
 
 	"github.com/djyuhn/gitcha/cmd/gitcha"
 	"github.com/djyuhn/gitcha/gittest"
-	"github.com/djyuhn/gitcha/internal/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type MockProgram struct {
-	mock.Mock
-}
-
-func (m *MockProgram) Run() (tea.Model, error) {
-	args := m.Called()
-	return args.Get(0).(tea.Model), args.Error(1)
-}
-
-var _ gitcha.Program = &MockProgram{}
 
 func TestNewApp(t *testing.T) {
 	t.Parallel()
@@ -72,41 +60,30 @@ func TestNewApp(t *testing.T) {
 	})
 }
 
-func TestNewAppProgram(t *testing.T) {
-	t.Parallel()
-
-	t.Run("given nil program should return nil App and error", func(t *testing.T) {
-		t.Parallel()
-
-		expectedErr := fmt.Errorf("NewAppProgram: received nil program")
-		app, err := gitcha.NewAppProgram(nil)
-
-		assert.Nil(t, app)
-		assert.ErrorContains(t, err, expectedErr.Error())
-	})
-
-	t.Run("given program should return App and nil error", func(t *testing.T) {
-		t.Parallel()
-
-		program := tea.Program{}
-		app, err := gitcha.NewAppProgram(&program)
-
-		assert.NotNil(t, app)
-		assert.NoError(t, err)
-	})
-}
-
 func TestApp_GitchaTui(t *testing.T) {
 	t.Parallel()
 
 	t.Run("given error when executing program should return error", func(t *testing.T) {
 		t.Parallel()
 
-		mockProgram := new(MockProgram)
-		mockProgram.On("Run").Return(tui.EntryModel{}, fmt.Errorf("error in program"))
-
-		app, err := gitcha.NewAppProgram(mockProgram)
+		ctx := context.Background()
+		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
+
+		wt, err := basicRepo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		dirPath := fs.Root()
+
+		var buf bytes.Buffer
+		var in bytes.Buffer
+
+		app, err := gitcha.NewApp(dirPath, tea.WithInput(&in), tea.WithOutput(&buf))
+		require.NoError(t, err)
+
+		go app.TuiProgram.Kill()
 
 		expectedError := fmt.Errorf("GitchaTui: attempted to run program and received an error")
 		err = app.GitchaTui()
@@ -117,11 +94,24 @@ func TestApp_GitchaTui(t *testing.T) {
 	t.Run("given program runs without error should return nil error", func(t *testing.T) {
 		t.Parallel()
 
-		mockProgram := new(MockProgram)
-		mockProgram.On("Run").Return(tui.EntryModel{}, nil)
-
-		app, err := gitcha.NewAppProgram(mockProgram)
+		ctx := context.Background()
+		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
+
+		wt, err := basicRepo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		dirPath := fs.Root()
+
+		var buf bytes.Buffer
+		var in bytes.Buffer
+
+		app, err := gitcha.NewApp(dirPath, tea.WithInput(&in), tea.WithOutput(&buf))
+		require.NoError(t, err)
+
+		go app.TuiProgram.Send(tea.Quit())
 
 		err = app.GitchaTui()
 

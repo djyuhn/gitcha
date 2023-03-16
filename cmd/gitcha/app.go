@@ -10,18 +10,12 @@ import (
 	"github.com/djyuhn/gitcha/internal/tui"
 )
 
-type Program interface {
-	Run() (tea.Model, error)
-}
-
-var _ Program = &tea.Program{}
-
 type App struct {
 	TuiModel   tui.EntryModel
-	TuiProgram Program
+	TuiProgram tea.Program
 }
 
-func NewApp(repoDirPath string) (*App, error) {
+func NewApp(repoDirPath string, opts ...tea.ProgramOption) (*App, error) {
 	repoReader, err := reporeader.NewRepoReader(repoDirPath)
 	if err != nil {
 		return nil, fmt.Errorf("NewApp: directory does not contain a repository: %w", err)
@@ -32,20 +26,12 @@ func NewApp(repoDirPath string) (*App, error) {
 		return nil, fmt.Errorf("NewApp: error during creation of tui model: %w", err)
 	}
 
-	program := tea.NewProgram(entryModel)
+	program := tea.NewProgram(entryModel, opts...)
 
-	return &App{TuiModel: entryModel, TuiProgram: program}, nil
+	return &App{TuiModel: entryModel, TuiProgram: *program}, nil
 }
 
-func NewAppProgram(program Program) (*App, error) {
-	if program == nil {
-		return nil, fmt.Errorf("NewAppProgram: received nil program")
-	}
-
-	return &App{TuiProgram: program}, nil
-}
-
-// GitchaTui will start up the TUI for Gitcha.
+// GitchaTui will start up the TUI program for Gitcha.
 func (a *App) GitchaTui() error {
 	if _, err := a.TuiProgram.Run(); err != nil {
 		return fmt.Errorf("GitchaTui: attempted to run program and received an error: %w", err)
