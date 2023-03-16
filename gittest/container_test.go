@@ -21,10 +21,27 @@ func TestCreateEmptyRepo(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		repo, err := gittest.CreateEmptyRepo(ctx, t)
+		_, repo, err := gittest.CreateEmptyRepo(ctx, t)
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, transport.ErrEmptyRemoteRepository.Error())
 		assert.NotNil(t, repo)
+	})
+
+	t.Run("should return directory of empty repository", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		actual, repo, err := gittest.CreateEmptyRepo(ctx, t)
+		require.Error(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		dirPath := fs.Root()
+
+		assert.Equal(t, dirPath, actual)
 	})
 }
 

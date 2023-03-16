@@ -11,7 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func CreateEmptyRepo(ctx context.Context, t *testing.T) (*git.Repository, error) {
+// CreateEmptyRepo will return the directory path of the repository, the repository, and will return an error.
+// Given that an empty repository will return an error when attempting to retrieve the git.Repository, the error
+// returned will be transport.ErrEmptyRemoteRepository.
+func CreateEmptyRepo(ctx context.Context, t *testing.T) (string, *git.Repository, error) {
 	t.Helper()
 
 	const exposedPort = "9418/tcp"
@@ -43,7 +46,7 @@ func CreateEmptyRepo(ctx context.Context, t *testing.T) (*git.Repository, error)
 		URL: url,
 	})
 
-	return repo, err
+	return testDir, repo, err
 }
 
 func CreateBasicRepo(ctx context.Context, t *testing.T) (*git.Repository, error) {
