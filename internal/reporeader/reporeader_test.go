@@ -154,7 +154,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	t.Run("given multiple commit authors should return map with each author email as key", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
 		require.NoError(t, err)
 
 		expectedAuthor1 := reporeader.Author{
@@ -305,7 +305,7 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 	t.Run("given multiple commit authors should return map with each author email as key", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicMultiAuthorRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)

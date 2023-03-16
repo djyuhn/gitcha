@@ -85,7 +85,8 @@ func CreateBasicRepo(ctx context.Context, t *testing.T) (string, *git.Repository
 	return testDir, repo, err
 }
 
-func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (*git.Repository, error) {
+// CreateBasicMultiAuthorRepo will return the directory path of the repository, the repository, and will return an error.
+func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (string, *git.Repository, error) {
 	t.Helper()
 
 	const exposedPort = "9418/tcp"
@@ -116,7 +117,7 @@ func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (*git.Reposit
 		URL: url,
 	})
 
-	return repo, err
+	return testDir, repo, err
 }
 
 func CreateMultiNamedAuthorRepo(ctx context.Context, t *testing.T) (*git.Repository, error) {
