@@ -340,7 +340,7 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 	t.Run("given multiple commit authors with pseudonyms should return map with each author email as key and the total number of their commits", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
+		_, repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)

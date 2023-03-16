@@ -215,7 +215,7 @@ func TestCreateMultiNamedAuthorRepo(t *testing.T) {
 		const expectedAuthorEmail3 = "gitcha3@gitcha.com"
 		const expectedAuthorEmail4 = "gitcha4@gitcha.com"
 
-		repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
+		_, repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
 		require.NoError(t, err)
 
 		cIter, err := repo.Log(&git.LogOptions{All: true})
@@ -243,5 +243,22 @@ func TestCreateMultiNamedAuthorRepo(t *testing.T) {
 		assert.Len(t, authorEmailToCommits[expectedAuthorEmail2], 2)
 		assert.Len(t, authorEmailToCommits[expectedAuthorEmail3], 3)
 		assert.Len(t, authorEmailToCommits[expectedAuthorEmail4], 4)
+	})
+
+	t.Run("should return directory of the basic repository", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		actual, repo, err := gittest.CreateMultiNamedAuthorRepo(ctx, t)
+		require.NoError(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		dirPath := fs.Root()
+
+		assert.Equal(t, dirPath, actual)
 	})
 }

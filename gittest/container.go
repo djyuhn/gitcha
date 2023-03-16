@@ -120,7 +120,7 @@ func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (string, *git
 	return testDir, repo, err
 }
 
-func CreateMultiNamedAuthorRepo(ctx context.Context, t *testing.T) (*git.Repository, error) {
+func CreateMultiNamedAuthorRepo(ctx context.Context, t *testing.T) (string, *git.Repository, error) {
 	t.Helper()
 
 	const exposedPort = "9418/tcp"
@@ -151,5 +151,5 @@ func CreateMultiNamedAuthorRepo(ctx context.Context, t *testing.T) (*git.Reposit
 		URL: url,
 	})
 
-	return repo, err
+	return testDir, repo, err
 }
