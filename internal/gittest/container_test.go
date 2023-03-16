@@ -284,125 +284,73 @@ func TestCreateMultiLanguageRepo(t *testing.T) {
 		assert.Equal(t, dirPath, actual)
 	})
 
-	t.Run("should add C# files to repository", func(t *testing.T) {
+	t.Run("language files", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		expectedFileNames := []string{
-			"C#/FileScopedNamespace.cs",
-			"C#/Program.cs",
+		type languageTest struct {
+			description       string
+			expectedFileNames []string
 		}
 
-		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
-		require.NoError(t, err)
-
-		wt, err := repo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		for _, name := range expectedFileNames {
-			file, err := fs.Stat(name)
-			require.NoError(t, err)
-			require.NotNil(t, file)
+		testCases := []languageTest{
+			{
+				description: "should add C# files to repository",
+				expectedFileNames: []string{
+					"C#/FileScopedNamespace.cs",
+					"C#/Program.cs",
+				},
+			},
+			{
+				description: "should add Clojure files to repository",
+				expectedFileNames: []string{
+					"Clojure/for.clj",
+					"Clojure/rand.cljscm",
+					"Clojure/svg.cljx",
+					"Clojure/unit-test.clj",
+				},
+			},
+			{
+				description: "should add Elixir files to repository",
+				expectedFileNames: []string{
+					"Elixir/atom.ex",
+					"Elixir/function.ex",
+				},
+			},
+			{
+				description: "should add Go files to repository",
+				expectedFileNames: []string{
+					"Go/go.sum",
+					"Go/oapi-codegen.go",
+				},
+			},
+			{
+				description: "should add Rust files to repository",
+				expectedFileNames: []string{
+					"Rust/main.rs",
+					"Rust/task.rs",
+				},
+			},
 		}
-	})
+		for _, tc := range testCases {
+			tc := tc
+			t.Run(tc.description, func(t *testing.T) {
+				t.Parallel()
+				ctx := context.Background()
 
-	t.Run("should add Clojure files to repository", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+				_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
+				require.NoError(t, err)
 
-		expectedFileNames := []string{
-			"Clojure/for.clj",
-			"Clojure/rand.cljscm",
-			"Clojure/svg.cljx",
-			"Clojure/unit-test.clj",
-		}
+				wt, err := repo.Worktree()
+				require.NoError(t, err)
 
-		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
-		require.NoError(t, err)
+				fs := wt.Filesystem
 
-		wt, err := repo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		for _, name := range expectedFileNames {
-			file, err := fs.Stat(name)
-			require.NoError(t, err)
-			require.NotNil(t, file)
-		}
-	})
-
-	t.Run("should add Elixir files to repository", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		expectedFileNames := []string{
-			"Elixir/atom.ex",
-			"Elixir/function.ex",
-		}
-
-		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
-		require.NoError(t, err)
-
-		wt, err := repo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		for _, name := range expectedFileNames {
-			file, err := fs.Stat(name)
-			require.NoError(t, err)
-			require.NotNil(t, file)
-		}
-	})
-
-	t.Run("should add Go files to repository", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		expectedFileNames := []string{
-			"Go/go.sum",
-			"Go/oapi-codegen.go",
-		}
-
-		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
-		require.NoError(t, err)
-
-		wt, err := repo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		for _, name := range expectedFileNames {
-			file, err := fs.Stat(name)
-			require.NoError(t, err)
-			require.NotNil(t, file)
-		}
-	})
-
-	t.Run("should add Rust files to repository", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		expectedFileNames := []string{
-			"Rust/main.rs",
-			"Rust/task.rs",
-		}
-
-		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
-		require.NoError(t, err)
-
-		wt, err := repo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		for _, name := range expectedFileNames {
-			file, err := fs.Stat(name)
-			require.NoError(t, err)
-			require.NotNil(t, file)
+				for _, name := range tc.expectedFileNames {
+					file, err := fs.Stat(name)
+					assert.NoError(t, err)
+					assert.NotNil(t, file)
+				}
+			})
 		}
 	})
 }
