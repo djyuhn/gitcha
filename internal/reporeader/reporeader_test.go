@@ -21,15 +21,11 @@ func TestNewRepoReader(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		emptyRepo, err := gittest.CreateEmptyRepo(ctx, t)
+		repoDir, _, err := gittest.CreateEmptyRepo(ctx, t)
 		require.Error(t, err)
-		wt, err := emptyRepo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
 
 		expectedError := fmt.Errorf("NewRepoReader: error detected in attempting to open repository")
-		reader, err := reporeader.NewRepoReader(fs.Root())
+		reader, err := reporeader.NewRepoReader(repoDir)
 
 		assert.Nil(t, reader)
 		assert.Errorf(t, err, expectedError.Error())
@@ -60,7 +56,7 @@ func TestNewRepoReaderRepository(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		emptyRepo, err := gittest.CreateEmptyRepo(ctx, t)
+		_, emptyRepo, err := gittest.CreateEmptyRepo(ctx, t)
 		require.Error(t, err)
 
 		expectedError := fmt.Errorf("NewRepoReaderRepository: received an invalid repository")
@@ -470,7 +466,7 @@ func TestValidateRepository(t *testing.T) {
 	t.Run("given empty repository should return error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateEmptyRepo(ctx, t)
+		_, repo, err := gittest.CreateEmptyRepo(ctx, t)
 		require.Error(t, err)
 
 		expectedErr := fmt.Errorf("ValidateRepository: received a repository without a head")

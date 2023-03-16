@@ -42,18 +42,11 @@ func TestNewApp(t *testing.T) {
 	t.Run("given directory with invalid repository should return nil App and error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		basicRepo, err := gittest.CreateEmptyRepo(ctx, t)
+		repoDir, _, err := gittest.CreateEmptyRepo(ctx, t)
 		require.Error(t, err)
 
-		wt, err := basicRepo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		dirPath := fs.Root()
-
 		expectedError := fmt.Errorf("NewApp: directory does not contain a repository")
-		app, err := gitcha.NewApp(dirPath)
+		app, err := gitcha.NewApp(repoDir)
 
 		assert.ErrorContains(t, err, expectedError.Error())
 		assert.Nil(t, app)
