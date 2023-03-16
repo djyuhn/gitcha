@@ -35,14 +35,10 @@ func TestNewRepoReader(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
-		require.NoError(t, err)
-		wt, err := basicRepo.Worktree()
+		dirPath, _, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
-		fs := wt.Filesystem
-
-		reader, err := reporeader.NewRepoReader(fs.Root())
+		reader, err := reporeader.NewRepoReader(dirPath)
 
 		assert.NotNil(t, reader)
 		assert.NoError(t, err)
@@ -70,7 +66,7 @@ func TestNewRepoReaderRepository(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		_, basicRepo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		reader, err := reporeader.NewRepoReaderRepository(basicRepo)
@@ -86,7 +82,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	t.Run("given repository with commits should return time of oldest commit and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		cIter, err := repo.Log(&git.LogOptions{Order: git.LogOrderCommitterTime})
@@ -112,7 +108,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	t.Run("given single commit author should return map with author commits", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		head, err := repo.Head()
@@ -193,7 +189,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	t.Run("given basic repository with LICENSE file at root should return MIT license and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -208,7 +204,7 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 	t.Run("given repository with no LICENSE file should return NO LICENSE string and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		wt, err := repo.Worktree()
@@ -233,7 +229,7 @@ func TestRepoReader_GetCreatedDate(t *testing.T) {
 	t.Run("given repository with commits should return time of oldest commit", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		cIter, err := repo.Log(&git.LogOptions{Order: git.LogOrderCommitterTime})
@@ -263,7 +259,7 @@ func TestRepoReader_GetAuthorsByCommits(t *testing.T) {
 	t.Run("given single commit author should return map with author commits", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		head, err := repo.Head()
@@ -385,7 +381,7 @@ func TestRepoReader_GetLicense(t *testing.T) {
 	t.Run("given basic repository with LICENSE file at root should return MIT license and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -400,7 +396,7 @@ func TestRepoReader_GetLicense(t *testing.T) {
 	t.Run("given basic repository with LICENSE.md file at root should return MIT license and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		wt, err := repo.Worktree()
@@ -421,7 +417,7 @@ func TestRepoReader_GetLicense(t *testing.T) {
 	t.Run("given repository with no LICENSE file should return NO LICENSE string and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		wt, err := repo.Worktree()
@@ -479,7 +475,7 @@ func TestValidateRepository(t *testing.T) {
 	t.Run("given valid repository should return head reference and nil error", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		expected, err := repo.Head()

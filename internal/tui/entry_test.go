@@ -36,7 +36,7 @@ func TestNewEntryModel(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -52,7 +52,7 @@ func TestNewEntryModel(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -70,7 +70,7 @@ func TestNewEntryModel(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -90,7 +90,7 @@ func TestEntryModel_Init(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -123,7 +123,7 @@ func TestEntryModel_Init(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -157,7 +157,7 @@ func TestEntryModel_Update(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)
@@ -176,7 +176,7 @@ func TestEntryModel_Update(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		repoReader, err := reporeader.NewRepoReaderRepository(repo)

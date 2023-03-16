@@ -22,15 +22,8 @@ func TestNewApp(t *testing.T) {
 	t.Run("given directory with a valid repository should return non nil App and nil error and non-nil EntryModel RepoReader", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		dirPath, _, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
-
-		wt, err := basicRepo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		dirPath := fs.Root()
 
 		app, err := gitcha.NewApp(dirPath)
 
@@ -60,15 +53,8 @@ func TestApp_GitchaTui(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		dirPath, _, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
-
-		wt, err := basicRepo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		dirPath := fs.Root()
 
 		var buf bytes.Buffer
 		var in bytes.Buffer
@@ -88,15 +74,8 @@ func TestApp_GitchaTui(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		basicRepo, err := gittest.CreateBasicRepo(ctx, t)
+		dirPath, _, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
-
-		wt, err := basicRepo.Worktree()
-		require.NoError(t, err)
-
-		fs := wt.Filesystem
-
-		dirPath := fs.Root()
 
 		var buf bytes.Buffer
 		var in bytes.Buffer

@@ -52,7 +52,7 @@ func TestCreateBasicRepo(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		cIter, err := repo.Log(&git.LogOptions{All: true})
@@ -83,7 +83,7 @@ func TestCreateBasicRepo(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		repo, err := gittest.CreateBasicRepo(ctx, t)
+		_, repo, err := gittest.CreateBasicRepo(ctx, t)
 		require.NoError(t, err)
 
 		cIter, err := repo.Log(&git.LogOptions{All: true})
@@ -102,6 +102,23 @@ func TestCreateBasicRepo(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(uniqueAuthors))
+	})
+
+	t.Run("should return directory of the basic repository", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		actual, repo, err := gittest.CreateBasicRepo(ctx, t)
+		require.NoError(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+
+		fs := wt.Filesystem
+
+		dirPath := fs.Root()
+
+		assert.Equal(t, dirPath, actual)
 	})
 }
 
