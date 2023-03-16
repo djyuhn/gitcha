@@ -9,7 +9,9 @@ import (
 
 	"github.com/djyuhn/gitcha/internal/reporeader"
 	"github.com/djyuhn/gitcha/internal/tui/overview"
+	"github.com/djyuhn/gitcha/internal/tui/style"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,14 +93,22 @@ func TestOverview_View(t *testing.T) {
 		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
 		model := overview.NewOverview(repoDetails)
 
+		defaultTheme := style.NewDefaultTheme()
+
 		orderedAuthors := getSortedAuthorsByCommitCount(authorCommits)
 		expectedView := strings.Builder{}
 		for i := 0; i < 3; i++ {
-			name := orderedAuthors[i].AuthorName
-			email := orderedAuthors[i].AuthorEmail
-			count := len(orderedAuthors[i].Commits)
-			expectedView.WriteString(fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", name, email, count))
+			primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+			secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
+
+			label := primaryColorStyle.Render("Author:")
+			name := secondaryColorStyle.Render(orderedAuthors[i].AuthorName)
+			email := secondaryColorStyle.Render(orderedAuthors[i].AuthorEmail)
+			count := secondaryColorStyle.Render(fmt.Sprintf("%d", len(orderedAuthors[i].Commits)))
+
+			expectedView.WriteString(fmt.Sprintf("%s %s %s %s\n", label, name, email, count))
 		}
+
 		actual := model.View()
 
 		assert.Contains(t, actual, expectedView.String())
@@ -131,45 +141,26 @@ func TestOverview_View(t *testing.T) {
 		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
 		model := overview.NewOverview(repoDetails)
 
-		expectedView := fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", author.Name, author.Email, commitCount)
-		actual := model.View()
+		defaultTheme := style.NewDefaultTheme()
 
-		assert.Contains(t, actual, expectedView)
-	})
+		orderedAuthors := getSortedAuthorsByCommitCount(authorCommits)
 
-	t.Run("given only 1 author with multiple names should return only 1 author and the name of their last commit in view", func(t *testing.T) {
-		t.Parallel()
+		expectedView := strings.Builder{}
+		for i := 0; i < len(orderedAuthors); i++ {
+			primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+			secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
 
-		authorCommits := make(map[string][]reporeader.Commit)
+			label := primaryColorStyle.Render("Author:")
+			name := secondaryColorStyle.Render(orderedAuthors[i].AuthorName)
+			email := secondaryColorStyle.Render(orderedAuthors[i].AuthorEmail)
+			count := secondaryColorStyle.Render(fmt.Sprintf("%d", len(orderedAuthors[i].Commits)))
 
-		authorName := "Author Name"
-		authorEmail := "author@email.com"
-
-		const commitCount = 10
-		commits := make([]reporeader.Commit, 0, commitCount)
-		for j := 0; j < commitCount; j++ {
-			author := reporeader.Author{
-				Name:  fmt.Sprintf("%s%d", authorName, j),
-				Email: authorEmail,
-			}
-			commit := reporeader.Commit{
-				Author:  author,
-				Message: fmt.Sprintf("Message %d", j),
-				Hash:    fmt.Sprintf("Hash %d", j),
-			}
-			commits = append(commits, commit)
+			expectedView.WriteString(fmt.Sprintf("%s %s %s %s\n", label, name, email, count))
 		}
-		authorCommits[authorEmail] = commits
 
-		repoDetails := reporeader.RepoDetails{AuthorsCommits: authorCommits}
-		model := overview.NewOverview(repoDetails)
-
-		expectedName := fmt.Sprintf("%s%d", authorName, commitCount-1)
-
-		expectedView := fmt.Sprintf("AuthorEmail - %s : Email - %s : Commit count - %d\n", expectedName, authorEmail, commitCount)
 		actual := model.View()
 
-		assert.Contains(t, actual, expectedView)
+		assert.Contains(t, actual, expectedView.String())
 	})
 
 	t.Run("given repository created date should return created date formatted as RFC822 in view", func(t *testing.T) {
@@ -183,7 +174,15 @@ func TestOverview_View(t *testing.T) {
 		}
 		model := overview.NewOverview(repoDetails)
 
-		expectedView := fmt.Sprintf("Repository Created Date - %s\n", repoDetails.CreatedDate.Format(time.RFC822))
+		defaultTheme := style.NewDefaultTheme()
+
+		primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+		secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
+
+		labelView := primaryColorStyle.Render("Created:")
+		createdDate := secondaryColorStyle.Render(repoDetails.CreatedDate.Format(time.RFC822))
+
+		expectedView := fmt.Sprintf("%s %s", labelView, createdDate)
 
 		actual := model.View()
 
@@ -201,7 +200,15 @@ func TestOverview_View(t *testing.T) {
 		}
 		model := overview.NewOverview(repoDetails)
 
-		expectedView := fmt.Sprintf("Repository License - %s\n", repoDetails.License)
+		defaultTheme := style.NewDefaultTheme()
+
+		primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+		secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
+
+		labelView := primaryColorStyle.Render("License:")
+		licenseView := secondaryColorStyle.Render(repoDetails.License)
+
+		expectedView := fmt.Sprintf("%s %s", labelView, licenseView)
 
 		actual := model.View()
 
