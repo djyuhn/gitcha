@@ -10,3 +10,4 @@ docker build -f "$SCRIPT_DIR"/image/empty_repo.Dockerfile -t gitcha/empty_repo .
 docker build -f "$SCRIPT_DIR"/image/basic_repo_single_author.Dockerfile -t gitcha/basic_repo_single_author ./setup/image/
 docker build -f "$SCRIPT_DIR"/image/basic_repo_multiple_authors.Dockerfile -t gitcha/basic_repo_multiple_authors ./setup/image/
 docker build -f "$SCRIPT_DIR"/image/repo_multi_named_authors.Dockerfile -t gitcha/repo_multi_named_authors ./setup/image/
+docker build -f "$SCRIPT_DIR"/image/multi_lang_repo.Dockerfile -t gitcha/multi_lang_repo ./setup/image/
