@@ -436,6 +436,66 @@ func TestRepoReader_GetLicense(t *testing.T) {
 	})
 }
 
+func TestRepoReader_GetLanguageDetails(t *testing.T) {
+	t.Parallel()
+
+	t.Run("given repo with multiple languages should return each language with file count and not include the .git folder files", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
+		require.NoError(t, err)
+
+		reader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		expected := map[reporeader.Language]reporeader.LanguageDetails{
+			"C#":           {Language: "C#", FileCount: 2},
+			"Clojure":      {Language: "Clojure", FileCount: 4},
+			"Elixir":       {Language: "Elixir", FileCount: 2},
+			"Rust":         {Language: "Rust", FileCount: 2},
+			"Go":           {Language: "Go", FileCount: 1},
+			"Go Checksums": {Language: "Go Checksums", FileCount: 1},
+		}
+
+		actual, err := reader.GetLanguageDetails()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("given repo with a file that cannot be classified should add to UNCLASSIFIED count", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
+		require.NoError(t, err)
+
+		wt, err := repo.Worktree()
+		require.NoError(t, err)
+		fs := wt.Filesystem
+
+		_, err = fs.Create("someemptyfile.withsomeextensionthatisunclassifiable")
+		require.NoError(t, err)
+
+		reader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		expected := reporeader.LanguageDetails{
+			Language:  "UNCLASSIFIED",
+			FileCount: 1,
+		}
+
+		actual, err := reader.GetLanguageDetails()
+
+		assert.NoError(t, err)
+
+		actualVal, ok := actual["UNCLASSIFIED"]
+		assert.True(t, ok)
+		assert.Equal(t, expected, actualVal)
+	})
+}
+
 func TestValidateRepository(t *testing.T) {
 	t.Parallel()
 

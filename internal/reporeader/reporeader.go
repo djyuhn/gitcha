@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-enry/go-enry/v2"
 	"github.com/go-enry/go-license-detector/v4/licensedb"
 	"github.com/go-enry/go-license-detector/v4/licensedb/filer"
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -206,6 +208,88 @@ func (r *RepoReader) GetLicense() (string, error) {
 	}
 
 	return license, err
+}
+
+type Language string
+
+type LanguageDetails struct {
+	Language  Language
+	FileCount int32
+}
+
+// GetLanguageDetails gets the programming language details for the repository.
+// The programming language is the key followed by the details for the given language.
+func (r *RepoReader) GetLanguageDetails() (map[Language]LanguageDetails, error) {
+	wt, err := r.repository.Worktree()
+	if err != nil {
+		return nil, fmt.Errorf("GetLanguageDetails: unable to get the worktree from the repository: %w", err)
+	}
+
+	fs := wt.Filesystem
+
+	languageToDetails := make(map[Language]LanguageDetails)
+
+	if err := getLanguageFilesFromDirectory(fs, languageToDetails, "."); err != nil {
+		return nil, fmt.Errorf("GetLanguageDetails: unable to get file languages: %w", err)
+	}
+
+	return languageToDetails, nil
+}
+
+func getLanguageFilesFromDirectory(fs billy.Filesystem, languageToDetails map[Language]LanguageDetails, dir string) error {
+	files, err := fs.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("getLanguageFilesFromDirectory: error attempting to read directory %s: %w", dir, err)
+	}
+	for _, file := range files {
+		fullPath := fs.Join(dir, file.Name())
+		if file.IsDir() {
+			if file.Name() == ".git" {
+				continue
+			}
+			err := getLanguageFilesFromDirectory(fs, languageToDetails, fullPath)
+			if err != nil {
+				return fmt.Errorf("getLanguageFilesFromDirectory: error attempting to read directory %s: %w", fullPath, err)
+			}
+		} else {
+			language, err := getLanguageFromFile(fs, fullPath)
+			if err != nil {
+				return fmt.Errorf("getLanguageFilesFromDirectory: error attempting to determine language for file %s: %w", fullPath, err)
+			}
+			if language == "" {
+				language = "UNCLASSIFIED"
+			}
+			addToLanguageDetails(languageToDetails, language, 1)
+		}
+	}
+
+	return nil
+}
+
+func getLanguageFromFile(fs billy.Filesystem, path string) (Language, error) {
+	fileContents, err := util.ReadFile(fs, path)
+	if err != nil {
+		return "", fmt.Errorf("getLanguageFromFile: error attempting to read file %s: %w", path, err)
+	}
+	language := enry.GetLanguage(path, fileContents)
+
+	return Language(language), nil
+}
+
+func addToLanguageDetails(languageToDetails map[Language]LanguageDetails, language Language, count int32) {
+	add := int32(0)
+	if count > 0 {
+		add = count
+	}
+
+	if val, ok := languageToDetails[language]; ok {
+		updateValue := val
+		updateValue.FileCount += add
+		languageToDetails[language] = updateValue
+	} else {
+		details := LanguageDetails{Language: language, FileCount: add}
+		languageToDetails[language] = details
+	}
 }
 
 // ValidateRepository validates the given repository and returns the head of the repository if valid and a nil error.
