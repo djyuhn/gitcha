@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/internal/gittest"
 	"github.com/djyuhn/gitcha/internal/reporeader"
 
 	"github.com/go-git/go-git/v5"

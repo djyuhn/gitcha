@@ -120,6 +120,7 @@ func CreateBasicMultiAuthorRepo(ctx context.Context, t *testing.T) (string, *git
 	return testDir, repo, err
 }
 
+// CreateMultiNamedAuthorRepo will return the directory path of the repository, the repository, and will return an error.
 func CreateMultiNamedAuthorRepo(ctx context.Context, t *testing.T) (string, *git.Repository, error) {
 	t.Helper()
 

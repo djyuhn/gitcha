@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/internal/gittest"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"

@@ -10,7 +10,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/internal/gittest"
+
 	"github.com/djyuhn/gitcha/internal/reporeader"
 	"github.com/djyuhn/gitcha/internal/tui"
 	"github.com/djyuhn/gitcha/internal/tui/overview"

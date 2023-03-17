@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/djyuhn/gitcha/cmd/gitcha"
-	"github.com/djyuhn/gitcha/gittest"
+	"github.com/djyuhn/gitcha/internal/gittest"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
