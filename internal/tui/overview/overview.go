@@ -20,16 +20,23 @@ type Overview struct {
 	theme       style.Theme
 
 	orderedAuthorsByCommitCount []AuthorCommitsPair
+	orderedLanguagesByFileCount []reporeader.LanguageDetails
 }
 
 var _ tea.Model = Overview{}
 
 func NewOverview(repoDetails reporeader.RepoDetails) Overview {
 	topAuthorsByCommits := getSortedAuthorsByCommitCount(repoDetails.AuthorsCommits)
+	orderedLanguagesByFileCount := getSortedLanguagesByFileCount(repoDetails.LanguageDetails)
 
 	defaultTheme := style.NewDefaultTheme()
 
-	return Overview{RepoDetails: repoDetails, orderedAuthorsByCommitCount: topAuthorsByCommits, theme: *defaultTheme}
+	return Overview{
+		RepoDetails:                 repoDetails,
+		theme:                       *defaultTheme,
+		orderedAuthorsByCommitCount: topAuthorsByCommits,
+		orderedLanguagesByFileCount: orderedLanguagesByFileCount,
+	}
 }
 
 func (o Overview) Init() tea.Cmd {
@@ -46,6 +53,7 @@ func (o Overview) View() string {
 	view.WriteString(o.buildRepoCreatedDateView() + "\n")
 	view.WriteString(o.buildLicenseView() + "\n")
 	view.WriteString(o.buildAuthorView() + "\n")
+	view.WriteString(o.buildLanguageView() + "\n")
 
 	return view.String()
 }
@@ -87,16 +95,33 @@ func (o Overview) buildAuthorView() string {
 		authorCount = len(o.orderedAuthorsByCommitCount)
 	}
 
-	for i := 0; i < authorCount; i++ {
-		primaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.PrimaryColor)
-		secondaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.SecondaryColor)
+	primaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.PrimaryColor)
+	secondaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.SecondaryColor)
 
-		label := primaryColorStyle.Render("Author:")
+	view.WriteString(primaryColorStyle.Render("Author:"))
+	for i := 0; i < authorCount; i++ {
 		name := secondaryColorStyle.Render(o.orderedAuthorsByCommitCount[i].AuthorName)
 		email := secondaryColorStyle.Render(o.orderedAuthorsByCommitCount[i].AuthorEmail)
 		count := secondaryColorStyle.Render(fmt.Sprintf("%d", len(o.orderedAuthorsByCommitCount[i].Commits)))
 
-		view.WriteString(fmt.Sprintf("%s %s %s %s\n", label, name, email, count))
+		view.WriteString(fmt.Sprintf(" %s %s %s", name, email, count))
+	}
+
+	return view.String()
+}
+
+func (o Overview) buildLanguageView() string {
+	view := strings.Builder{}
+
+	primaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.PrimaryColor)
+	secondaryColorStyle := lipgloss.NewStyle().Foreground(o.theme.General.SecondaryColor)
+
+	view.WriteString(primaryColorStyle.Render("Language:"))
+	for _, details := range o.orderedLanguagesByFileCount {
+		language := secondaryColorStyle.Render(string(details.Language))
+		count := secondaryColorStyle.Render(fmt.Sprintf("%d", details.FileCount))
+
+		view.WriteString(fmt.Sprintf(" %s %s", language, count))
 	}
 
 	return view.String()
@@ -131,4 +156,21 @@ func getSortedAuthorsByCommitCount(authorCommits map[string][]reporeader.Commit)
 	})
 
 	return authorCommitPairs
+}
+
+// getSortedLanguagesByFileCount iterates through languageToDetails and returns an ordered slice of reporeader.LanguageDetails.
+//
+// The slice is ordered by the highest to the lowest file count.
+func getSortedLanguagesByFileCount(languageToDetails map[reporeader.Language]reporeader.LanguageDetails) []reporeader.LanguageDetails {
+	languageDetails := make([]reporeader.LanguageDetails, 0, len(languageToDetails))
+	for _, details := range languageToDetails {
+		languageDetails = append(languageDetails, details)
+	}
+
+	// Want to order language details by the highest file count to the lowest
+	sort.SliceStable(languageDetails, func(i, j int) bool {
+		return languageDetails[i].FileCount > languageDetails[j].FileCount
+	})
+
+	return languageDetails
 }

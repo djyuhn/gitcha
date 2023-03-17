@@ -96,17 +96,17 @@ func TestOverview_View(t *testing.T) {
 		defaultTheme := style.NewDefaultTheme()
 
 		orderedAuthors := getSortedAuthorsByCommitCount(authorCommits)
-		expectedView := strings.Builder{}
-		for i := 0; i < 3; i++ {
-			primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
-			secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
+		primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+		secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
 
-			label := primaryColorStyle.Render("Author:")
+		expectedView := strings.Builder{}
+		expectedView.WriteString(primaryColorStyle.Render("Author:"))
+		for i := 0; i < 3; i++ {
 			name := secondaryColorStyle.Render(orderedAuthors[i].AuthorName)
 			email := secondaryColorStyle.Render(orderedAuthors[i].AuthorEmail)
 			count := secondaryColorStyle.Render(fmt.Sprintf("%d", len(orderedAuthors[i].Commits)))
 
-			expectedView.WriteString(fmt.Sprintf("%s %s %s %s\n", label, name, email, count))
+			expectedView.WriteString(fmt.Sprintf(" %s %s %s", name, email, count))
 		}
 
 		actual := model.View()
@@ -144,18 +144,17 @@ func TestOverview_View(t *testing.T) {
 		defaultTheme := style.NewDefaultTheme()
 
 		orderedAuthors := getSortedAuthorsByCommitCount(authorCommits)
+		primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+		secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
 
 		expectedView := strings.Builder{}
+		expectedView.WriteString(primaryColorStyle.Render("Author:"))
 		for i := 0; i < len(orderedAuthors); i++ {
-			primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
-			secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
-
-			label := primaryColorStyle.Render("Author:")
 			name := secondaryColorStyle.Render(orderedAuthors[i].AuthorName)
 			email := secondaryColorStyle.Render(orderedAuthors[i].AuthorEmail)
 			count := secondaryColorStyle.Render(fmt.Sprintf("%d", len(orderedAuthors[i].Commits)))
 
-			expectedView.WriteString(fmt.Sprintf("%s %s %s %s\n", label, name, email, count))
+			expectedView.WriteString(fmt.Sprintf(" %s %s %s", name, email, count))
 		}
 
 		actual := model.View()
@@ -214,6 +213,42 @@ func TestOverview_View(t *testing.T) {
 
 		assert.Contains(t, actual, expectedView)
 	})
+
+	t.Run("given language details should return view with languages and their file count in decreasing order", func(t *testing.T) {
+		t.Parallel()
+
+		authorCommits := make(map[string][]reporeader.Commit)
+		repoDetails := reporeader.RepoDetails{
+			CreatedDate:    time.Date(2023, time.January, 26, 3, 2, 1, 0, time.UTC),
+			AuthorsCommits: authorCommits,
+			License:        "SOME LICENSE",
+			LanguageDetails: map[reporeader.Language]reporeader.LanguageDetails{
+				"Go":     {Language: "Go", FileCount: 10},
+				"Elixir": {Language: "Elixir", FileCount: 5},
+				"Rust":   {Language: "Rust", FileCount: 2},
+			},
+		}
+		model := overview.NewOverview(repoDetails)
+
+		defaultTheme := style.NewDefaultTheme()
+
+		orderedLanguages := getSortedLanguagesByFileCount(repoDetails.LanguageDetails)
+		primaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.PrimaryColor)
+		secondaryColorStyle := lipgloss.NewStyle().Foreground(defaultTheme.General.SecondaryColor)
+
+		expectedView := strings.Builder{}
+		expectedView.WriteString(primaryColorStyle.Render("Language:"))
+		for _, details := range orderedLanguages {
+			language := secondaryColorStyle.Render(string(details.Language))
+			count := secondaryColorStyle.Render(fmt.Sprintf("%d", details.FileCount))
+
+			expectedView.WriteString(fmt.Sprintf(" %s %s", language, count))
+		}
+
+		actual := model.View()
+
+		assert.Contains(t, actual, expectedView.String())
+	})
 }
 
 func getSortedAuthorsByCommitCount(authorCommits map[string][]reporeader.Commit) []overview.AuthorCommitsPair {
@@ -236,4 +271,18 @@ func getSortedAuthorsByCommitCount(authorCommits map[string][]reporeader.Commit)
 	})
 
 	return authorCommitPairs
+}
+
+func getSortedLanguagesByFileCount(languageToDetails map[reporeader.Language]reporeader.LanguageDetails) []reporeader.LanguageDetails {
+	languageDetails := make([]reporeader.LanguageDetails, 0, len(languageToDetails))
+	for _, details := range languageToDetails {
+		languageDetails = append(languageDetails, details)
+	}
+
+	// Want to order language details by the highest file count to the lowest
+	sort.SliceStable(languageDetails, func(i, j int) bool {
+		return languageDetails[i].FileCount > languageDetails[j].FileCount
+	})
+
+	return languageDetails
 }
