@@ -19,9 +19,10 @@ type RepoReader struct {
 }
 
 type RepoDetails struct {
-	CreatedDate    time.Time
-	AuthorsCommits map[string][]Commit
-	License        string
+	CreatedDate     time.Time
+	AuthorsCommits  map[string][]Commit
+	License         string
+	LanguageDetails map[Language]LanguageDetails
 }
 
 type Author struct {
@@ -79,10 +80,16 @@ func (r *RepoReader) GetRepoDetails() (RepoDetails, error) {
 		return RepoDetails{}, fmt.Errorf("GetRepoDetails: unable to get the license for the repository: %w", err)
 	}
 
+	languageToDetails, err := r.GetLanguageDetails()
+	if err != nil {
+		return RepoDetails{}, fmt.Errorf("GetRepoDetails: unable to get language details for the repository: %w", err)
+	}
+
 	details := RepoDetails{
-		CreatedDate:    createdDate,
-		AuthorsCommits: authorsCommits,
-		License:        license,
+		CreatedDate:     createdDate,
+		AuthorsCommits:  authorsCommits,
+		License:         license,
+		LanguageDetails: languageToDetails,
 	}
 
 	return details, nil

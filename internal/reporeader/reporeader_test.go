@@ -221,6 +221,31 @@ func TestRepoReader_GetRepoDetails(t *testing.T) {
 		assert.Equal(t, "NO LICENSE", actual.License)
 		assert.NoError(t, err)
 	})
+
+	t.Run("given multi lang repository should return languages and their details", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		_, repo, err := gittest.CreateMultiLanguageRepo(ctx, t)
+		require.NoError(t, err)
+
+		reader, err := reporeader.NewRepoReaderRepository(repo)
+		require.NoError(t, err)
+
+		expected := map[reporeader.Language]reporeader.LanguageDetails{
+			"C#":           {Language: "C#", FileCount: 2},
+			"Clojure":      {Language: "Clojure", FileCount: 4},
+			"Elixir":       {Language: "Elixir", FileCount: 2},
+			"Rust":         {Language: "Rust", FileCount: 2},
+			"Go":           {Language: "Go", FileCount: 1},
+			"Go Checksums": {Language: "Go Checksums", FileCount: 1},
+		}
+
+		actual, err := reader.GetRepoDetails()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual.LanguageDetails)
+	})
 }
 
 func TestRepoReader_GetCreatedDate(t *testing.T) {
